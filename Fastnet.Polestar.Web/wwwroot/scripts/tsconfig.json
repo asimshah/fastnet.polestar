@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": false,
+    "noEmitOnError": true,
+    "removeComments": false,
+    "sourceMap": true,
+    "target": "es5"
+  },
+  "files": [
+    "../bower-packages/typings/browser.d.ts",
+    "../bower-packages/fastnet/fastnet.d.ts",
+    "../../transfermodels/index.d.ts",
+    "home.ts"
+  ] //,
+  //"exclude": [
+  //  "node_modules",
+  //  "wwwroot"
+  //]
+}

@@ -1,0 +1,20 @@
+﻿<div class="create-new-site">
+    <div>
+        <input type="text" data-bind="textInput: name" placeholder="site name"/>
+    </div>
+    <div data-bind="if: urlRequired">
+        <input type="text" data-bind="textInput: url" placeholder="site url">
+    </div>
+    <div>
+        <input type="text" data-bind="textInput: fromAddress" placeholder="from address (for email)">
+    </div>
+    <div>
+        <input type="text" data-bind="textInput: customisation" placeholder="customisation (optional)">
+        <div class="help-text" data-bind="text: customisationHelp" ></div>
+    </div>
+    <div>
+        <input type="text" data-bind="textInput: legacyDatabase" placeholder="legacy database">
+        <div class="help-text">Use this only for conversion of an old system, i.e. dhw-002</div>
+    </div>
+    <!--<pre style="font-size:12px" data-bind="text: ko.toJSON($data, null, 2)"></pre>-->
+</div>

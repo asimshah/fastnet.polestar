@@ -1,0 +1,238 @@
+﻿@import "_constants.scss";
+@import "_mixins.scss";
+
+html {
+    font-size: $htmlFontSize;
+}
+
+body {
+    font-size: $bodyFontSize;
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+
+.error-message {
+    color: $red;
+}
+
+.help-text {
+    font-style: italic;
+    color: $darkgrey;
+}
+
+.flex-layout {
+    // item defaults are: grow: 0, shrink 1, basis: auto
+    display: flex;
+
+    .expand-to-fill {
+        flex-grow: 1; // because the default is grow: 0!!
+    }
+
+    &.align-items-start {
+        align-items: flex-start;
+    }
+
+    &.vertical {
+        -ms-flex-direction: column;
+        -webkit-flex-direction: column;
+        flex-direction: column;
+    }
+}
+/*
+    define buttons as follows:
+    <span class="btn"></span> = no box
+    <span class="btn btn-default"></span> = box with default colours, also btn-alternate, btn-danger
+    <span class="btn btn-default btn-small"></span> = small box
+    ---
+    combine this with data-command="xxx" to handle click events - see command library in utils
+*/
+.btn {
+    @include btn();
+
+    &.btn-default {
+        @include btn-box($btn-default-backgroundColour);
+    }
+
+    &.btn-alternate {
+        @include btn-box($btn-alternate-backgroundColour);
+    }
+
+    &.btn-danger {
+        @include btn-box($btn-danger-backgroundColour);
+    }
+
+    &.btn-small {
+        font-size: 1.2rem;
+        padding: 0.5rem 1rem;
+    }
+}
+
+.banner {
+    font-size: 2.0rem;
+    position: fixed;
+    bottom: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: $bannerHeight;
+    width: $bannerWidth;
+    background-color: $bannerBackgroundColour;
+    color: $bannerForegroundColour;
+
+    .title {
+        margin-top: 0.5rem;
+        text-align: center;
+    }
+}
+
+.message-box {
+    .caption-bar {
+        background-color: $message-box-captionBarBackgoundColour;
+        color: $message-box-captionBarForegoundColour;
+    }
+
+    &.confirm-box {
+        .message-body {
+            text-align: center;
+            margin-top: 1rem;
+        }
+    }
+}
+
+.form {
+
+    input {
+        border: 1px solid #aaaaaa;
+        border-radius: 3px;
+        padding: 0.5rem;
+
+        &.validation-error {
+            border-color: $red;
+        }
+    }
+
+    .validationMessage {
+        color: $green;
+        font-style: italic;
+        font-size: 1.2rem;
+        margin-left: 1rem;
+    }
+
+    .caption-bar {
+        background-color: $form-captionBarBackgoundColour;
+        color: $form-captionBarForegoundColour;
+    }
+}
+
+#pageContainer {
+    margin-top: $bannerHeight;
+    padding-bottom: 1.0rem;
+    padding-left: 1.0rem;
+    padding-right: 1.0rem;
+
+    .remark {
+        font-style: italic;
+        color: dimgrey;
+    }
+
+    .source-info {
+        margin: 0.5rem;
+        padding: 1rem;
+
+        .source-location {
+            font-size: smaller;
+        }
+    }
+
+    .satellite {
+        margin: 0.5rem;
+        padding: 1rem;
+        border: 0.15rem solid blue;
+        border-radius: 0.2rem;
+
+        .identity {
+            .name {
+                font-weight: bold;
+            }
+        }
+
+        .outofdate {
+            color: red;
+        }
+        .satellite-command {
+            margin-left: 0.25rem;
+        }
+        .satellite-command-bar {
+            align-self: flex-start;
+            margin: 0.5rem;
+        }
+    }
+
+    .site-list {
+        margin-top: 1rem;
+
+        .site {
+            &:not(:last-child) {
+                border-bottom: 0.11rem solid lightgray;
+            }
+
+            .not-webframe {
+                font-style: italic;
+                color: lightgray;
+            }
+
+            .name {
+                min-width: 12rem;
+            }
+
+            .pool {
+                min-width: 16rem;
+            }
+
+            .port {
+                min-width: 9rem;
+            }
+
+            .version {
+                min-width: 12rem;
+            }
+
+            .databaseNames {
+                min-width: 25rem;
+            }
+
+            .btn[data-command] {
+                margin-top: 0.25rem;
+                margin-bottom: 0.25rem;
+                margin-right: 0.5rem;
+            }
+        }
+    }
+}
+
+.upload {
+
+    .progress-form {
+
+        .stage {
+            font-style: italic;
+        }
+    }
+}
+
+.create-new-site {
+    //background-color: #e8edf5;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+
+    > div {
+        display: flex;
+        flex-direction: column;
+    }
+
+    input {
+        margin-top: 1.0rem;
+    }
+}

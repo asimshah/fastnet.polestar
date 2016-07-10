@@ -1,0 +1,57 @@
+﻿<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Polestar</title>
+        <base href="@Url.Content("~/")" />
+        <environment names="Development">
+            <link rel="stylesheet" href="~/css/lib/all.css" />
+            <link rel="stylesheet" href="~/css/all.css" />
+        </environment>
+        <environment names="Staging,Production">
+            <link rel="stylesheet" href="~/css/common.min.css" />
+        </environment>
+       @* @Html.ApplicationInsightsJavaScript(TelemetryConfiguration)*@
+    </head>
+@{
+    var bodyClass = (bool)ViewData["IsMobile"] ? "mobile" : "desktop";
+}
+    <body class="@bodyClass">
+        <div class="polaris-app">
+            <div class="banner">
+                <div class="title">
+                    <span>@ViewData["Title"]</span>
+                </div>
+            </div>
+            <div id="pageContainer">
+                @RenderBody()
+            </div>
+        </div>
+        <environment names="Development">
+            <script src="~/js/lib/external.min.js"></script>
+
+            <script src="~/bower-packages/fastnet/javascriptExtensions.js" asp-append-version="true"></script>
+            <script src="~/bower-packages/fastnet/debug.js" asp-append-version="true"></script>
+            <script src="~/bower-packages/fastnet/busyIndicator.js" asp-append-version="true"></script>
+            <script src="~/bower-packages/fastnet/collections.js" asp-append-version="true"></script>
+            <script src="~/bower-packages/fastnet/date.js" asp-append-version="true"></script>
+            <script src="~/bower-packages/fastnet/ajax.js" asp-append-version="true"></script>
+            <script src="~/bower-packages/fastnet/template.js" asp-append-version="true"></script>
+            <script src="~/bower-packages/fastnet/knockout.js" asp-append-version="true"></script>
+            <script src="~/bower-packages/fastnet/jqhelper.js" asp-append-version="true"></script>
+            <script src="~/bower-packages/fastnet/commands.js" asp-append-version="true"></script>
+            <script src="~/bower-packages/fastnet/messagehub.js" asp-append-version="true"></script>
+            <script src="~/bower-packages/fastnet/forms.js" asp-append-version="true"></script>
+            <script src="~/scripts/home.js" asp-append-version="true"></script>
+            @*<script src="~/js/site.js" asp-append-version="true"></script>*@
+        </environment>
+        <environment names="Staging,Production">
+            <script src="~/js/lib/external.min.js"></script>
+            <script src="~/js/site.min.js"></script>
+        </environment>
+        <script src="~/signalr/hubs" type="text/javascript"></script>
+        @RenderSection("scripts", required: false)
+    </body>
+</html>

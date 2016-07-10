@@ -1,0 +1,9 @@
+{
+  "name": "asp.net",
+  "private": true,
+  "dependencies": {
+    "normalize-css": "4.1.1",
+    "signalr": "2.2.0",
+    "fastnet": "asimshah/fastnet-typescript"
+  }
+}

@@ -1,0 +1,63 @@
+﻿@import "_constants.scss";
+@mixin add-disabled() {
+    background: $btn-disabled-backgroundColour;
+    cursor: default;
+    pointer-events: none;
+}
+
+@mixin btn-colour($backgroundColour) {
+    $darkenedBackground: darken($backgroundColour, 10);
+    background: $backgroundColour;
+    /*background: -webkit-gradient(linear, left top, left bottom, from($darkenedBackground), to($backgroundColour));
+    background: -webkit-linear-gradient(top, $darkenedBackground,$backgroundColour);
+    background: -moz-linear-gradient(top, $darkenedBackground, $backgroundColour);
+    background: -ms-linear-gradient(top,$darkenedBackground, $backgroundColour);
+    background: -o-linear-gradient(top, $darkenedBackground, $backgroundColour);*/
+}
+
+@mixin btn() {
+    cursor: pointer;
+    text-align: center;
+
+    &:hover {
+        color: $hoverOverClickableColour;
+    }
+
+    &:active {
+    }
+
+    &.disabled, &[disabled] {
+        @include add-disabled();
+    }
+}
+
+@mixin btn-box($bc, $fc: $standardForegroundColour) {
+    /* buttons in IE always bounce the text on click - I have found no way to switch this off */
+    /* however, a simple way around this is to use a span or div in place of button (or input[type=button])             
+    */
+    border: 0;
+    cursor: pointer;
+    font-size: 1.4rem;
+    text-decoration: none;
+    vertical-align: middle;
+    padding: 0.725rem 1.45rem;
+    text-transform: none;
+    -webkit-border-radius: 0.5rem;
+    -moz-border-radius: 0.5rem;
+    border-radius: 0.5rem;
+    color: $fc;
+    @include btn-colour($bc);
+    @include btn();
+
+    &:hover {
+        background: $hoverOverClickableColour;
+        color: $fc;
+    }
+
+    a {
+        &:link, &:visited, &:hover, &:active {
+            color: inherit;
+            text-decoration: none;
+        }
+    }
+}

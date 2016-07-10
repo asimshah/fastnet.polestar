@@ -1,0 +1,95 @@
+﻿<div class="home-page">
+    <div data-bind="with: model">
+        <div class="source-info" data-bind="if: webframeSourceSatellite !== null">
+            <div data-bind="with: webframeSourceSatellite ">
+                <div>
+                    <span>Latest source: </span>
+                    <span data-bind="text: publishedWebframeVersion"></span>
+                </div><div>
+                    <span class="source-location">
+                        <span>(from: </span>
+                        <span data-bind="text: machine"></span>
+                        <span>, folder: </span>
+                        <span data-bind="text: publishingFolder"></span><span>)</span>
+                    </span>
+                    <span>Polestar </span><span class="assembly-version" data-bind="text: assemblyVersion"></span>
+                </div>
+            </div>
+        </div>
+        <div class="satellite-list">
+            <div data-bind="foreach: satellites">
+                <div class="satellite flex-layout vertical" data-bind="attr: {'data-satelliteurl': url}">
+                    <div class="identity">
+                        <span class="name" data-bind="text: name"></span>
+                        <span class="url" data-bind="text: url"></span>
+                        <span class="machine" data-bind="text: machine"></span>
+                        <span>Polestar </span><span class="assembly-version" data-bind="text: assemblyVersion"></span>
+                    </div>
+                    <div data-bind="if: isReady">
+                        <div data-bind="if: hasAccessFailed">
+                            <div class="error-message" data-bind="text: failureReason"></div>
+                        </div>
+                        <div class="flex-layout" data-bind="ifnot: hasAccessFailed">
+                            <div>
+                                <div data-bind="ifnot: webframeIsUploaded">
+                                    <span class="remark">No version of webframe is uploaded</span>
+                                </div>
+                                <div data-bind="if: webframeIsUploaded">
+                                    <div data-bind="css: { 'outofdate' : newVersionWaitingUpload()}">
+                                        <span>Uploaded version is </span><span class="uploaded-version" data-bind="text: uploadedWebframeVersion"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="expand-to-fill"></div>
+                            <div>
+                                <span class="btn btn-default satellite-command" data-command="uploadPolestarCommand">Upload Polestar ...</span>
+                            </div>
+                            <div>
+                                <span class="btn btn-default satellite-command" data-command="uploadWebframeCommand">Upload Webframe ...</span>
+                            </div>
+                        </div>
+                        <div class="site-list" data-bind="foreach: sites">
+                            <div class="site" data-bind="attr: {'data-site': name}">
+
+                                <div class="flex-layout" data-bind="css: {'not-webframe': isWebframe === false}">
+                                    <div class="name"><span data-bind="text: name"></span></div>
+                                    <div class="pool">
+                                        <span>Pool:</span><span data-bind="text: poolName"></span>
+                                    </div>
+                                    <div class="port">
+                                        <span>Port:</span><span data-bind="text: port"></span>
+                                    </div>
+                                    <div data-bind="if: isWebframe">
+                                        <div class="version" data-bind="css: { 'outofdate': isUpgradeable}">
+                                            <span data-bind="text: version().toString()"></span>
+                                        </div>
+                                    </div>
+                                    <div data-bind="if: isWebframe">
+                                        <div class="databaseNames" data-bind="text: databaseNames"></div>
+                                    </div>
+                                    <div data-bind="if: isWebframe">
+                                        <div class="btn btn-small btn-default" data-command="backupSiteCommand">Backup</div>
+                                    </div>
+                                    <div data-bind="if: isWebframe">
+                                        <div class="btn btn-small btn-default" data-command="deleteSiteCommand">Delete</div>
+                                    </div>
+                                    <div data-bind="if: isWebframe">
+                                        <div data-bind="if: isUpgradeable">
+                                            <div class="btn btn-small btn-default" data-command="upgradeSiteCommand">Upgrade</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                    <div class="satellite-command-bar" data-bind="if: webframeIsUploaded">
+                        <div class="btn btn-small btn-default"  data-command="createSiteCommand">Create New Site</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <pre style="font-size:12px" data-bind="text: ko.toJSON($data, null, 2)"></pre>
+</div>
