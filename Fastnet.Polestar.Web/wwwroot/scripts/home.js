@@ -31,14 +31,6 @@ var fastnet;
         }
         app.prototype.init = function () {
             var _this = this;
-            function _start() {
-                var _this = this;
-                fastnet.template.fetch("home").then(function (htmlFragment) {
-                    $("#pageContainer").off().empty().append($(htmlFragment));
-                    fastnet.koHelper.bind(_this.homeContainer, ".home-page");
-                    _this.start();
-                });
-            }
             fastnet.koHelper.initialiseValidation();
             fastnet.koHelper.addStandardAdditionalValidationRules();
             this.messageHub = new fastnet.messageHub();
