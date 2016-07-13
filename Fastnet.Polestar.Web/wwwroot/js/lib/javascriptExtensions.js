@@ -1,3 +1,7 @@
+// Note: not sure if I will need Promise.thenReturn
+// interface Promise {
+//     thenReturn(value: any);
+// }
 var fastnet;
 (function (fastnet) {
     (function () {
@@ -5,6 +9,31 @@ var fastnet;
             javascriptExtensions.addAll();
         });
     })();
+    var AsyncForEach = (function () {
+        function AsyncForEach() {
+            this.user = null;
+            this.array = null;
+            this.process = null;
+        }
+        AsyncForEach.prototype.forEach = function (array, f, user) {
+            var _this = this;
+            this.array = array;
+            this.process = f;
+            this.user = user;
+            return Promise.resolve(0).then(function (index) {
+                _this.loop(index);
+            });
+        };
+        AsyncForEach.prototype.loop = function (index) {
+            var _this = this;
+            if (index < this.array.length) {
+                return this.process(index, this.array, this.user).then(function () {
+                    setTimeout(function () { _this.loop(index + 1); }, 0);
+                });
+            }
+        };
+        return AsyncForEach;
+    }());
     var javascriptExtensions = (function () {
         function javascriptExtensions() {
         }
@@ -12,7 +41,27 @@ var fastnet;
             this.addArrayFind();
             this.addStringEndsWith();
             this.addStringEndsWith();
+            this.addAsyncForEach();
+            // Note: not sure if I will need Promise.thenReturn
+            // this.addThenReturn(); 
         };
+        javascriptExtensions.addAsyncForEach = function () {
+            if (!Array.prototype.asyncForEach) {
+                Array.prototype.asyncForEach = function (f, user) {
+                    var array = Object(this);
+                    var afe = new AsyncForEach();
+                    return afe.forEach(array, f, user);
+                };
+            }
+        };
+        // Note: not sure if I will need Promise.thenReturn
+        // private static addThenReturn() {
+        //     Promise.prototype.thenReturn = function (value) {
+        //         return this.then(function () {
+        //             return value;
+        //         });
+        //     };
+        // }
         javascriptExtensions.addStringStartsWith = function () {
             if (!String.prototype.startsWith) {
                 String.prototype.startsWith = function (searchString, position) {

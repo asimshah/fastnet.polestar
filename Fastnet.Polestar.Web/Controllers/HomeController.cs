@@ -9,6 +9,8 @@ using Fastnet.Core.Web.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
 using System.IO;
+using System.Diagnostics;
+using Newtonsoft.Json;
 
 namespace Fastnet.Polestar.Web.Controllers
 {
@@ -16,6 +18,7 @@ namespace Fastnet.Polestar.Web.Controllers
     [Route("cmd")]
     public partial class HomeController : BaseController
     {
+        private bool skipUpload = false;
         private readonly Microsoft.Extensions.Logging.ILogger<HomeController> logger;
         private readonly string machine;
         private readonly bool isDebuggerAttached;
@@ -23,15 +26,15 @@ namespace Fastnet.Polestar.Web.Controllers
         public satellite[] Satellites { get; set; }
         private readonly PolestarConfiguration config;
         private readonly Data.DataContext polestarData;
-        private readonly IMessageHubManager messageHub;
+        //private readonly IMessageHubManager messageHub;
         private readonly ITaskManager taskManager;
         private string siteurl;
         public HomeController(IHttpContextAccessor hca, Microsoft.AspNetCore.Hosting.IHostingEnvironment env,
             Microsoft.Extensions.Options.IOptions<PolestarConfiguration> polestarConfig, Microsoft.Extensions.Logging.ILogger<HomeController> logger,
-            Data.DataContext ctx, IMessageHubManager messageHub, ITaskManager tm) : base(env)
+            Data.DataContext ctx, /*IMessageHubManager messageHub, */ ITaskManager tm) : base(env)
         {
             this.logger = logger;
-            this.messageHub = messageHub;
+            //this.messageHub = messageHub;
             this.taskManager = tm;
             this.isDebuggerAttached = System.Diagnostics.Debugger.IsAttached;
             this.machine = Environment.MachineName.ToLower();
@@ -56,13 +59,25 @@ namespace Fastnet.Polestar.Web.Controllers
         [Route("satellite/current")]
         public IActionResult GetSatelliteInformation()
         {
-            return this.currentSatellite == null ? ErrorResult("Current Satellite not available") : SuccessResult(this.currentSatellite);
+            if(this.currentSatellite == null)
+            {
+                logger.LogInformation("satellite/current returns 'not available'");
+                return ErrorResult("Current Satellite not available");
+            }
+            else
+            {
+                logger.LogInformation($"satellite/current returns {JsonConvert.SerializeObject(this.currentSatellite, Formatting.Indented)}");
+                return SuccessResult(this.currentSatellite);
+            }
+            //return this.currentSatellite == null ? ErrorResult("Current Satellite not available") : SuccessResult(this.currentSatellite);
         }
         [HttpGet]
         [Route("satellite/list")]
         public IActionResult GetSatellites()
         {
-            return SuccessResult(this.Satellites.Where(x => x.active).OrderBy(x => x.name));
+            var r = this.Satellites.Where(x => x.active).OrderBy(x => x.name);
+            logger.LogInformation($"satellite/list returns {JsonConvert.SerializeObject(r, Formatting.Indented)}");
+            return SuccessResult(r);
         }
         [HttpPost]
         [Route("create/site")]
@@ -124,37 +139,108 @@ namespace Fastnet.Polestar.Web.Controllers
         //}
         #endregion
 
+        //[HttpGet("polestardeployment/oldstart")]
+        //public IActionResult DeployPolestar(string url)
+        //{
+        //    var sourceFolder = currentSatellite.polestarSourceFolder;
+        //    var zipFile = System.IO.Directory.EnumerateFiles(sourceFolder, "*.zip").OrderBy(x => new FileInfo(x).CreationTime).Last();
+        //    logger.LogInformation($"cmd: upload {zipFile} to {url}");
+        //    var target = this.Satellites.SingleOrDefault(x => string.Compare(x.url, url, true) == 0);
+        //    Task.Run(async () =>
+        //    {
+        //        await UploadPolestarToSatellite(target, zipFile);
+        //    });
+        //    return SuccessResult(null);
+        //}
+        //[HttpGet("webframedeployment/oldstart")]
+        //public IActionResult DeployWebframe(string url)
+        //{
+        //    if (this.currentSatellite?.latestAvailableWebframeVersion > new version())
+        //    {
+        //        var target = this.Satellites.SingleOrDefault(x => string.Compare(x.url, url, true) == 0);
+        //        Task.Run(() => UploadWebframeToSatellite(target));
+        //        return SuccessResult(null);
+        //    }
+        //    else
+        //    {
+        //        return ErrorResult("No version of webframe is available");
+        //    }
+        //}
         [HttpGet("polestardeployment/start")]
-        //[Route("polestardeployment/start")]
-        public IActionResult DeployPolestar(string url)
+        public async Task<IActionResult> StartPolestarUpload(string url)
         {
             var sourceFolder = currentSatellite.polestarSourceFolder;
             var zipFile = System.IO.Directory.EnumerateFiles(sourceFolder, "*.zip").OrderBy(x => new FileInfo(x).CreationTime).Last();
             logger.LogInformation($"cmd: upload {zipFile} to {url}");
             var target = this.Satellites.SingleOrDefault(x => string.Compare(x.url, url, true) == 0);
-            Task.Run(async () =>
-            {
-                await UploadPolestarToSatellite(target, zipFile);
-            });
-            return SuccessResult(null);
+            var r = await PrepareForUpload(target, zipFile);
+            r.isPolestarUpload = true;
+            return SuccessResult(r);
         }
         [HttpGet("webframedeployment/start")]
-        //[Route("webframedeployment/start")]
-        public IActionResult DeployWebframe(string url)
+        public async Task<IActionResult> StartWebframeUpload(string url)
         {
             if (this.currentSatellite?.latestAvailableWebframeVersion > new version())
-            {
+            {               
+                var zipFile = this.CompressWebframeFiles();
                 var target = this.Satellites.SingleOrDefault(x => string.Compare(x.url, url, true) == 0);
-                Task.Run(() => UploadWebframeTosatellite(target));
-                return SuccessResult(null);
+                var r = await PrepareForUpload(target, zipFile);
+                r.isPolestarUpload = false;
+                return SuccessResult(r);
             }
             else
             {
                 return ErrorResult("No version of webframe is available");
             }
         }
-        [HttpGet]
-        [Route("poll")]
+        [HttpGet("upload/{key}/{chunkNumber}/{chunkSize}")]
+        public async Task<IActionResult> UploadBlock(string key, int chunkNumber, int chunkSize, string url, string file)
+        {
+            if (!skipUpload)
+            {
+                var target = this.Satellites.SingleOrDefault(x => string.Compare(x.url, url, true) == 0);
+                byte[] buffer = new byte[chunkSize];
+                using (var fs = new FileStream(file, FileMode.Open, FileAccess.Read))
+                {
+                    long sp = chunkSize * chunkNumber;
+                    fs.Seek(sp, SeekOrigin.Begin);
+                    var length = await fs.ReadAsync(buffer, 0, chunkSize);
+                    var transfer = new byte[length];
+                    Array.Copy(buffer, transfer, length);
+                    var p2p = new Polestar2PolestarClient(target);
+                    var data = new
+                    {
+                        Key = key,
+                        ChunkNumber = chunkNumber,
+                        Data = transfer
+                    };
+                    await p2p.AddFileChunk(data);
+                } 
+            }
+            else
+            {
+                await Task.Delay(100);
+                Debug.WriteLine($"skipping key {key} chunk {chunkNumber}");
+            }
+            return SuccessResult(null);
+        }
+        [HttpGet("finaliseupload/{isPolestar}/{key}")]
+        public async Task<IActionResult> FinaliseUpload(bool isPolestar, string key, string url)
+        {
+            if (!skipUpload)
+            {
+                var target = this.Satellites.SingleOrDefault(x => string.Compare(x.url, url, true) == 0);
+                var p2p = new Polestar2PolestarClient(target);
+                await p2p.FinaliseDeployment(key, isPolestar); 
+            }
+            else
+            {
+                await Task.Delay(100);
+                Debug.WriteLine($"skip finalise key {key}");
+            }
+            return SuccessResult(null);
+        }
+        [HttpGet("poll")]
         public void Poll()
         {
             //DateTime time = DateTime.Now;
@@ -276,7 +362,6 @@ namespace Fastnet.Polestar.Web.Controllers
                 logger.LogError(xe.Message);
             }
         }
-
         private void CreateRequiredBackupTasks()
         {
             if (!this.currentSatellite.isWebframeSource)
@@ -307,7 +392,7 @@ namespace Fastnet.Polestar.Web.Controllers
                 await taskManager.StartAsync(pt);
             });
         }
-        private async Task UploadWebframeTosatellite(satellite target)
+        private string CompressWebframeFiles()
         {
             string tempfolder = Path.Combine(Path.GetTempPath(), "Polestar");
             if (!Directory.Exists(tempfolder))
@@ -316,41 +401,64 @@ namespace Fastnet.Polestar.Web.Controllers
             }
             string publishFolder = this.currentSatellite.publishingFolder;// SpecialFolders.GetWebframePublishFolder();
             string zipFileName = Path.Combine(tempfolder, Path.GetFileNameWithoutExtension(Path.GetRandomFileName()) + ".zip");
-            //Log.Write("DeployWebframe: random zipfilename is {0}", zipFileName);
             FolderCompression fc = new FolderCompression();
             fc.SourceFolder = publishFolder;
             fc.OutputFilename = zipFileName;
-            try
-            {
-                using (var ml = new MessageListener(target.url))
-                {
-                    ml.AddHandler<zipProgress>((zp) => { messageHub.SendMessage(zp); });
-                    ml.AddHandler<unZipFinished>((zf) => { messageHub.SendMessage(zf); });
-                    await ml.Start();
-                    fc.Compress();
-                    logger.LogInformation($"{zipFileName} created");
-                    await messageHub.SendMessage(new zipFinished());
-                    var p2p = new Polestar2PolestarClient(target);
-                    string key = await p2p.UploadFileToSatellite(zipFileName);
-                    await p2p.FinaliseDeployment(key);
-                    await messageHub.SendMessage(new uploadFinished());
-                }
-            }
-            catch (Exception xe)
-            {
-                logger.LogError($"DeployWebframe() failed", xe);
-            }
-            finally
-            {
-                System.IO.File.Delete(zipFileName);
-            }
+            fc.Compress();
+            logger.LogInformation($"{zipFileName} created");
+            return zipFileName;
         }
-        private async Task UploadPolestarToSatellite(satellite target, string filename)
+        //private async Task UploadWebframeToSatellite(satellite target)
+        //{
+        //    string tempfolder = Path.Combine(Path.GetTempPath(), "Polestar");
+        //    if (!Directory.Exists(tempfolder))
+        //    {
+        //        Directory.CreateDirectory(tempfolder);
+        //    }
+        //    string publishFolder = this.currentSatellite.publishingFolder;// SpecialFolders.GetWebframePublishFolder();
+        //    string zipFileName = Path.Combine(tempfolder, Path.GetFileNameWithoutExtension(Path.GetRandomFileName()) + ".zip");
+        //    //Log.Write("DeployWebframe: random zipfilename is {0}", zipFileName);
+        //    FolderCompression fc = new FolderCompression();
+        //    fc.SourceFolder = publishFolder;
+        //    fc.OutputFilename = zipFileName;
+        //    try
+        //    {
+        //        using (var ml = new MessageListener(target.url))
+        //        {
+        //            ml.AddHandler<zipProgress>((zp) => { messageHub.SendMessage(zp); });
+        //            ml.AddHandler<unZipFinished>((zf) => { messageHub.SendMessage(zf); });
+        //            await ml.Start();
+        //            fc.Compress();
+        //            logger.LogInformation($"{zipFileName} created");
+        //            await messageHub.SendMessage(new zipFinished());
+        //            var p2p = new Polestar2PolestarClient(target);
+        //            string key = await p2p.UploadFileToSatellite(zipFileName);
+        //            await p2p.FinaliseDeployment(key);
+        //            await messageHub.SendMessage(new uploadFinished());
+        //        }
+        //    }
+        //    catch (Exception xe)
+        //    {
+        //        logger.LogError($"DeployWebframe() failed", xe);
+        //    }
+        //    finally
+        //    {
+        //        System.IO.File.Delete(zipFileName);
+        //    }
+        //}
+        //private async Task UploadPolestarToSatellite(satellite target, string filename)
+        //{
+        //    var p2p = new Polestar2PolestarClient(target);
+        //    string key = await p2p.UploadFileToSatellite(filename);
+        //    await p2p.FinaliseDeployment(key, polestar: true);
+        //    await messageHub.SendMessage(new uploadFinished());
+        //}
+        private async Task<uploadInfo> PrepareForUpload(satellite target, string filename)
         {
             var p2p = new Polestar2PolestarClient(target);
-            string key = await p2p.UploadFileToSatellite(filename);
-            await p2p.FinaliseDeployment(key, polestar: true);
-            await messageHub.SendMessage(new uploadFinished());
+            var r = await p2p.InitialiseUpload(filename);
+            r.satellite = target;
+            return r;
         }
     }
 }

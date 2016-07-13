@@ -1,5 +1,5 @@
 {
-  "version": "1.1.1",
+  "version": "1.1.4",
   "dependencies": {
     "Microsoft.AspNetCore.Diagnostics": "1.0.0",
     "Microsoft.AspNetCore.Mvc": "1.0.0",
@@ -10,6 +10,7 @@
     "Microsoft.AspNetCore.Server.IISIntegration": "1.0.0",
     "Microsoft.AspNetCore.Server.Kestrel": "1.0.0",
     "Microsoft.AspNetCore.StaticFiles": "1.0.0",
+    "Microsoft.AspNetCore.Cors": "1.0.0",
     "Microsoft.Extensions.Configuration.EnvironmentVariables": "1.0.0",
     "Microsoft.Extensions.Configuration.Json": "1.0.0",
     "Microsoft.Extensions.Logging": "1.0.0",
@@ -23,7 +24,8 @@
     "MicrosoftSQLServerSMO2014Wmi": "1.0.1",
     "Polestar.Data": "1.0.0-*",
     "Microsoft.Extensions.Logging.Abstractions": "1.0.0",
-    "Fastnet.Core.Web": "2.1.0"
+    "Fastnet.Core.Web": "2.1.0",
+    "Microsoft.Extensions.Configuration.CommandLine": "1.0.0"
   },
 
   "tools": {
@@ -59,6 +61,8 @@
 
   "scripts": {
     "prepublish": [ "npm install", "bower install", "gulp clean", "gulp min" ],
-    "postpublish": [ "dotnet publish-iis --publish-folder %publish:OutputPath% --framework %publish:FullTargetFramework%" ]
+    "postpublish": [
+      "dotnet publish-iis --publish-folder %publish:OutputPath% --framework %publish:FullTargetFramework%"
+    ]    
   }
 }

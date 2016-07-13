@@ -22,14 +22,15 @@ namespace Fastnet.Polestar.Web
             {
                 return this.minor.CompareTo(other.minor);
             }
-            else if (this.revision != other.revision)
-            {
-                return this.revision.CompareTo(other.revision);
-            }
             else if (this.build != other.build)
             {
                 return this.build.CompareTo(other.build);
             }
+            else if (this.revision != other.revision)
+            {
+                return this.revision.CompareTo(other.revision);
+            }
+
             return 0;
         }
         public static bool operator >(version v1, version v2)
