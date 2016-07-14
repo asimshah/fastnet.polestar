@@ -14,7 +14,6 @@ namespace Fastnet.Polestar.Web.Controllers
     public partial class HomeController
     {
         [HttpGet("backup/list")]
-        //[Route("backup/list")]
         public IActionResult GetBackupList()
         {
             var bh = new BackupHelper(taskManager, currentSatellite);
@@ -22,7 +21,6 @@ namespace Fastnet.Polestar.Web.Controllers
             return SuccessResult(list);
         }
         [HttpGet("get/chunk/{backupFilename}/{offset}/{transferLength}")]
-        //[Route("get/chunk/{backupFilename}/{offset}/{transferLength}")]
         public async Task<IActionResult> GetChunk(string backupFilename, long offset, int transferLength)
         {
             backupFilename = Path.Combine(this.currentSatellite.backupFolder, backupFilename);
@@ -49,7 +47,6 @@ namespace Fastnet.Polestar.Web.Controllers
             }
         }
         [HttpGet("get/uploadkey/{filename}/{ext}")]
-        //[Route("get/uploadkey/{filename}/{ext}")]
         public async Task<IActionResult> GetUploadKey(string filename, string ext)
         {
             try
@@ -72,7 +69,6 @@ namespace Fastnet.Polestar.Web.Controllers
             }
         }
         [HttpGet("setuploadtotal/{key}/{total}")]
-        //[Route("setuploadtotal/{key}/{total}")]
         public async Task<IActionResult> SetUploadTotal(string key, long total)
         {
             Guid guid = Guid.Parse(key);
@@ -89,7 +85,6 @@ namespace Fastnet.Polestar.Web.Controllers
             }
         }
         [HttpPost("add/chunk")]
-        //[Route("add/chunk")]
         public async Task<IActionResult> AddFileChunk([FromBody] dynamic chunk)
         {
             try

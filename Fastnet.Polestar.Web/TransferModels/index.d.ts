@@ -5,4 +5,5 @@
 /// <reference path="satelliteInformation.cs.d.ts" />
 /// <reference path="messages.cs.d.ts" />
 /// <reference path="transferInfo.cs.d.ts" />
+/// <reference path="uploadInfo.cs.d.ts" />
 /// <reference path="newSite.cs.d.ts" />
