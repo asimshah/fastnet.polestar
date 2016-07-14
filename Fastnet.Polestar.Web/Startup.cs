@@ -65,9 +65,10 @@ namespace Fastnet.Polestar.Web
 #endif
             services.AddOptions();
             services.Configure<PolestarConfiguration>(Configuration.GetSection("PolestarConfiguration"));
+            services.AddSingleton<IConfigurationRoot>(Configuration);// so Tasks like Archive can access configuration information
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<ITemplateRepository, TemplateRepository>();
-            services.AddSingleton<IMessageHubManager, MessageHubManager>();
+            //services.AddSingleton<IMessageHubManager, MessageHubManager>();
             services.AddScoped<ITaskManager, TaskManager>((sp) => {
                 var tm = new TaskManager(sp, connectionString);
                 return tm;
@@ -80,6 +81,16 @@ namespace Fastnet.Polestar.Web
             ProviderHelper.ServiceProvider = app.ApplicationServices; // this is supposed to be an "anti-pattern" - but how else can we get things like logger in classes that are not implemented as services
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug((text, level) => {
+                switch(level)
+                {
+                    default:
+                        return false;
+                    case LogLevel.Information:
+                    case LogLevel.Warning:
+                    case LogLevel.Error:
+                    case LogLevel.Critical:
+                        return true;
+                }
                 //if(text.StartsWith("Microsoft"))
                 //{
                 //    return false;
@@ -88,7 +99,7 @@ namespace Fastnet.Polestar.Web
                 //{
                 //    return false;
                 //}
-                return true;
+                //return true;
             });
             loggerFactory.AddRollingFile(Configuration.GetSection("RollingFileLog"));
             var logger = loggerFactory.CreateLogger<Startup>();
@@ -103,6 +114,8 @@ namespace Fastnet.Polestar.Web
             {
                 app.UseExceptionHandler("/Home/Error");
             }
+            //**NB** make sure the UseCors call is first!!!
+            app.UseCors("PolestarSatellites");
             app.UseDefaultFiles();
             app.UseStaticFiles();
 
@@ -112,11 +125,12 @@ namespace Fastnet.Polestar.Web
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
+           
             tm.Initialise();
-#if SignalR
-            app.UseWebSockets();
-            app.UseSignalR(); 
-#endif
+//#if SignalR
+//            app.UseWebSockets();
+//            app.UseSignalR(); 
+//#endif
         }
     }
 }

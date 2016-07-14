@@ -188,7 +188,7 @@ namespace Fastnet.Polestar.Web
                     try
                     {
                         await DetachDatabase(sqlServerName, databaseName);
-                        logger.LogInformation($"database {databaseName} (in {status}) detached");
+                        //logger.LogInformation($"database {databaseName} (in {status}) detached");
                     }
                     catch (Exception xe)
                     {
@@ -302,12 +302,12 @@ namespace Fastnet.Polestar.Web
                     if (!Directory.Exists(outputPath))
                     {
                         Directory.CreateDirectory(outputPath);
-                        logger.LogInformation($"BackupFolder(): output directory {outputPath} created");
+                        logger.LogInformation($"output directory {outputPath} created");
                     }
                     if (File.Exists(outputFilename))
                     {
                         File.Delete(outputFilename);
-                        logger.LogInformation($"BackupFolder(): existing file {outputFilename} deleted");
+                        logger.LogInformation($"existing file {outputFilename} deleted");
                     }
                     using (ZipFile zip = new ZipFile())
                     {
@@ -328,20 +328,20 @@ namespace Fastnet.Polestar.Web
                         };
                         zip.ZipError += (s, e) =>
                         {
-                            logger.LogInformation($"BackupFolder():  file {e.FileName}, error: {e.Exception.Message}, skipped");
+                            logger.LogInformation($"file {e.FileName}, error: {e.Exception.Message}, skipped");
                             e.CurrentEntry.ZipErrorAction = ZipErrorAction.Skip;
                         };
                         zip.ParallelDeflateThreshold = -1;
                         zip.AddDirectory(sourceFolder.FullName, sourceFolder.Name);
-                        logger.LogTrace($"BackupFolder(): folder {sourceFolder.FullName} backup to {outputFilename} started ...");
+                        logger.LogTrace($"folder {sourceFolder.FullName} backup to {outputFilename} started ...");
                         zip.Save(outputFilename);
-                        logger.LogTrace($"BackupFolder(): folder {sourceFolder.FullName} backup to {outputFilename} finished");
+                        logger.LogTrace($"folder {sourceFolder.FullName} backup to {outputFilename} finished");
                     }
                 }
             }
             catch (Exception xe)
             {
-                logger.LogError($"BackupFolder(): backup failed, source: {sourceFolder.FullName}, output {outputFilename}", xe);
+                logger.LogError($"backup failed, source: {sourceFolder.FullName}, output {outputFilename}", xe);
                 throw;
             }
             return result;
@@ -556,7 +556,7 @@ namespace Fastnet.Polestar.Web
             NTAccount fileOwner = GetOwner(file);
             if (string.Compare(current.Value, fileOwner.Value, true) != 0)
             {
-                logger.LogInformation($"{file}, ownership changing from {fileOwner.Value} to {current.Value} ...");
+                //logger.LogInformation($"{file}, ownership changing from {fileOwner.Value} to {current.Value} ...");
                 var fs = File.GetAccessControl(file);
                 fs.SetOwner(current);
                 logger.LogInformation($"{file}, ownership changed from {fileOwner.Value} to {current.Value}", file, fileOwner.Value, current.Value);

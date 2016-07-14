@@ -21,12 +21,12 @@ namespace fastnet {
         private signalRUnavailable = true;
         private satellites: server.satellite[];
         private homeContainer = new koContainer<homePageModel>();
-        private messageHub: messageHub = null;
+        //private messageHub: messageHub = null;
         public init() {
             koHelper.initialiseValidation();
             koHelper.addStandardAdditionalValidationRules();
-            this.messageHub = new messageHub();
-            this.messageHub.PrintLogs = true;
+            //this.messageHub = new messageHub();
+            //this.messageHub.PrintLogs = true;
             if (this.signalRUnavailable) { // Note: this 'should' be temporary, i.e. until signalR becomes available again
                 template.fetch("home").then((htmlFragment: string) => {
                     $("#pageContainer").off().empty().append($(htmlFragment));
@@ -34,13 +34,14 @@ namespace fastnet {
                     this.start();
                 });
             } else {
-                this.messageHub.start().then(() => {
-                    template.fetch("home").then((htmlFragment: string) => {
-                        $("#pageContainer").off().empty().append($(htmlFragment));
-                        koHelper.bind(this.homeContainer, ".home-page");
-                        this.start();
-                    });
+                template.fetch("home").then((htmlFragment: string) => {
+                    $("#pageContainer").off().empty().append($(htmlFragment));
+                    koHelper.bind(this.homeContainer, ".home-page");
+                    this.start();
                 });
+                //this.messageHub.start().then(() => {
+
+                //});
             }
         }
         public start() {
@@ -74,20 +75,23 @@ namespace fastnet {
             var url = $(cmd.target).closest('.satellite').attr('data-satelliteurl');
             //debug.print(`received command ${cmd.commandName} for ${url}`);
             var selectedSatellite = this.homeContainer.model().findSatellite(url);
-            var polestar;
+            //var polestar;
             switch (cmd.command) {
                 case commands.uploadPolestarCommand:
-                    polestar = true;
+                    //polestar = true;
+                    var uploader = new webframeUploader(selectedSatellite);
+                    uploader.start(true).then(() => {
+                        this.refreshSatellite(selectedSatellite);
+                    });
+                    break;
                 case commands.uploadWebframeCommand:
-                    var uploader = new webframeUploader(this.messageHub, selectedSatellite);
-                    uploader.start(polestar).then(() => {
-                        this.getSatelliteInformation(selectedSatellite).then(() => {
-                            this.attachSatelliteListCommands();
-                        });
+                    var uploader = new webframeUploader(selectedSatellite);
+                    uploader.start(false).then(() => {
+                        this.refreshSatellite(selectedSatellite);
                     });
                     break;
                 case commands.createSiteCommand:
-                    var wh = new webframeHelper(this.messageHub, selectedSatellite);
+                    var wh = new webframeHelper(selectedSatellite);
                     wh.create().then((r) => {
                         if (r) {
                             this.refreshSatellite(selectedSatellite);
@@ -98,7 +102,7 @@ namespace fastnet {
                 case commands.deleteSiteCommand:
                     var siteName = $(cmd.target).closest('.site').attr('data-site');
                     var sm = selectedSatellite.findSite(siteName);
-                    var wh = new webframeHelper(this.messageHub, selectedSatellite);
+                    var wh = new webframeHelper(selectedSatellite);
                     if (cmd.command === commands.deleteSiteCommand) {
                         wh.delete(sm).then((r) => {
                             if (r) {
@@ -116,7 +120,7 @@ namespace fastnet {
                 case commands.backupSiteCommand:
                     var siteName = $(cmd.target).closest('.site').attr('data-site');
                     var sm = selectedSatellite.findSite(siteName);
-                    var wh = new webframeHelper(this.messageHub, selectedSatellite);
+                    var wh = new webframeHelper(selectedSatellite);
                     wh.backup(sm).then(() => { });
                     break;
                 default:
@@ -161,24 +165,24 @@ namespace fastnet {
         }
     }
     abstract class webframeActions {
-        protected remoteMessageHub: messageHub = null;
+        //protected remoteMessageHub: messageHub = null;
         protected logHandler: number = 0;
         protected satellite: satelliteModel = null;
-        protected closeRemoteLog() {
-            this.remoteMessageHub.PrintLogs = false;
-        }
-        protected logRemoteMessages(): Promise<void> {
-            this.remoteMessageHub = new messageHub();
-            return this.remoteMessageHub.start(this.satellite.url).then(() => {
-                this.remoteMessageHub.PrintLogs = true;
-            });
-        }
+        //protected closeRemoteLog() {
+        //    this.remoteMessageHub.PrintLogs = false;
+        //}
+        //protected logRemoteMessages(): Promise<void> {
+        //    this.remoteMessageHub = new messageHub();
+        //    return this.remoteMessageHub.start(this.satellite.url).then(() => {
+        //        this.remoteMessageHub.PrintLogs = true;
+        //    });
+        //}
     }
     class webframeHelper extends webframeActions {
-        private homeMessageHub: messageHub = null;
-        constructor(messageHub: messageHub, satellite: satelliteModel) {
+        //private homeMessageHub: messageHub = null;
+        constructor(/*messageHub: messageHub,*/ satellite: satelliteModel) {
             super();
-            this.homeMessageHub = messageHub;
+            //this.homeMessageHub = messageHub;
             this.satellite = satellite;
         }
         public create(): Promise<boolean> {
@@ -222,7 +226,7 @@ namespace fastnet {
                     if (r) {
                         debug.print("delete confirmed");
                         this.deleteStep2(site).then(() => {
-                            this.closeRemoteLog();
+                            //this.closeRemoteLog();
                             resolve(true);
                         });
                     } else {
@@ -237,14 +241,15 @@ namespace fastnet {
             var bi = new busyIndicator();
             bi.block(`Upgrading site ${site.name} on ${this.satellite.url}`);
             return new Promise<boolean>((resolve) => {
-                return this.logRemoteMessages().then(() => {
-                    var url = this.satellite.url + `/cmd/upgrade/site/${site.name}`;
-                    return ajax.Get({ url: url, cache: false }, true).then((r) => {
-                        this.closeRemoteLog();
-                        resolve(true);
-                        bi.unBlock();
-                    });
+                var url = this.satellite.url + `/cmd/upgrade/site/${site.name}`;
+                return ajax.Get({ url: url, cache: false }, true).then((r) => {
+                    //this.closeRemoteLog();
+                    resolve(true);
+                    bi.unBlock();
                 });
+                //return this.logRemoteMessages().then(() => {
+
+                //});
             });
 
         }
@@ -252,27 +257,29 @@ namespace fastnet {
             var bi = new busyIndicator();
             bi.block(`Backup of site ${site.name} on ${this.satellite.url}`);
             return new Promise<void>((resolve) => {
-                return this.logRemoteMessages().then(() => {
-                    var url = this.satellite.url + `/cmd/backup/site/${site.name}`;
-                    return ajax.Get({ url: url, cache: false }, true).then((r) => {
-                        this.closeRemoteLog();
-                        resolve();
-                        bi.unBlock();
-                    });
+                var url = this.satellite.url + `/cmd/backup/site/${site.name}`;
+                return ajax.Get({ url: url, cache: false }, true).then((r) => {
+                    //this.closeRemoteLog();
+                    resolve();
+                    bi.unBlock();
                 });
+                //return this.logRemoteMessages().then(() => {
+
+                //});
             });
         }
 
         private deleteStep2(site: siteModel): Promise<void> {
             var bi = new busyIndicator();
             bi.block(`Deleting site ${site.name} on ${this.satellite.url}`);
-            return this.logRemoteMessages().then((resolve) => {
-                var url = this.satellite.url + `/cmd/delete/site/${site.name}`;
-                return ajax.Get({ url: url }, true).then((r) => {
-                    this.closeRemoteLog();
-                    bi.unBlock();
-                });
+            var url = this.satellite.url + `/cmd/delete/site/${site.name}`;
+            return ajax.Get({ url: url }, true).then((r) => {
+                //this.closeRemoteLog();
+                bi.unBlock();
             });
+            //return this.logRemoteMessages().then((resolve) => {
+
+            //});
         }
         private createStep2(nsm: newSiteModel): Promise<void> {
             var newSite: server.newSite = {
@@ -284,14 +291,14 @@ namespace fastnet {
             };
             var bi = new busyIndicator();
             bi.block(`Creating site ${nsm.name} on ${this.satellite.url}`);
-            return this.logRemoteMessages().then(() => {
-                var url = this.satellite.url + "/cmd/create/site";
-                //debug.print(`new site requested on ${url}`);
-                return ajax.Post({ url: url, data: newSite }, true).then(() => {
-                    this.closeRemoteLog();
-                    bi.unBlock();
-                });
+            var url = this.satellite.url + "/cmd/create/site";
+            return ajax.Post({ url: url, data: newSite }, true).then(() => {
+                //this.closeRemoteLog();
+                bi.unBlock();
             });
+            //return this.logRemoteMessages().then(() => {
+
+            //});
         }
 
     }
@@ -304,34 +311,69 @@ namespace fastnet {
             { type: "uploadFinished", handlerNumber: null }
         ];
         private mb: messageBox = null;
-        private messageHub: messageHub = null;
+        //private messageHub: messageHub = null;
         //private satellite: satelliteModel = null;
         private promiseResolver: (value?: void | Thenable<void>) => void = null;
-        constructor(messageHub: messageHub, uploadTo: satelliteModel) {
+        constructor(/*messageHub: messageHub,*/ uploadTo: satelliteModel) {
             super();
-            this.messageHub = messageHub;
+            //this.messageHub = messageHub;
             this.satellite = uploadTo;
         }
-        public start(uploadPolestar?: boolean): Promise<void> {
-            var polestar = uploadPolestar == undefined || uploadPolestar == null ? false : true;
-            return this.logRemoteMessages().then(() => {
-                return new Promise<void>((resolve, reject) => {
-                    this.promiseResolver = resolve;
-                    this.addMessageHandlers();
-                    var messageBody = this.getProgressFormTemplate();
-                    var temp = $(messageBody);
-                    temp.find('.subject').text(`Upload to: ${this.satellite.url}`);
-                    var caption = polestar ? "Polestar Upload" : "Webframe Upload";
-                    this.mb = new messageBox({
-                        caption: caption, template: temp.get(0).outerHTML,
-                        classNames: "upload", okButtonDisable: true, cancelButtonDisable: true
-                    });
-                    this.mb.show().then((r: boolean) => { });
-                    var cmd = polestar ? "polestardeployment" : "webframedeployment";
-                    var url = `cmd/${cmd}/start?url=${encodeURI(this.satellite.url)}`;
-                    return ajax.Get({ url: url, cache: false }).then(() => { });
+        public start(uploadPolestar: boolean): Promise<void> {
+            var polestar = uploadPolestar;// == undefined || uploadPolestar == null ? false : true;
+            return new Promise<void>((resolve, reject) => {
+                this.promiseResolver = resolve;
+                //this.addMessageHandlers();
+                var messageBody = this.getProgressFormTemplate();
+                var temp = $(messageBody);
+                temp.find('.subject').text(`Upload to: ${this.satellite.url}`);
+                var caption = polestar ? "Polestar Upload" : "Webframe Upload";
+                this.mb = new messageBox({
+                    caption: caption, template: temp.get(0).outerHTML,
+                    classNames: "upload", okButtonDisable: true, cancelButtonDisable: true,
+                    afterDisplay: () => {
+                        if (!polestar) {
+                            $('.progress-form').find('.stage').text("Compressing webframe files ...");
+                        }
+                    }
+                });
+                this.mb.show().then((r: boolean) => { });
+                var cmd = polestar ? "polestardeployment" : "webframedeployment";
+
+                var url = `cmd/${cmd}/start?url=${encodeURI(this.satellite.url)}`;
+                return ajax.Get({ url: url, cache: false }).then((r: dataResult) => {
+                    var uploadInfo: server.uploadInfo = r.data;
+                    $('.progress-form').find('.stage').text(`Uploading in ${uploadInfo.totalChunks} blocks`);
+                    this.uploadBlock(uploadInfo);
                 });
             });
+            //return this.logRemoteMessages().then(() => {
+
+            //});
+        }
+        private uploadBlock(uploadInfo: server.uploadInfo): void {
+            if (uploadInfo.chunkNumber < uploadInfo.totalChunks) {
+                //debug.print(`File: ${uploadInfo.filename}, uploaded chunk ${uploadInfo.chunkNumber} ...`);
+                let url = `cmd/upload/${uploadInfo.key}/${uploadInfo.chunkNumber}/${uploadInfo.chunkSize}?url=${encodeURI(uploadInfo.satellite.url)}&file=${encodeURI(uploadInfo.filename)}`;
+                ajax.Get({ url: url, cache: false }).then((r: dataResult) => {
+                    //debug.print(`    ...File: ${uploadInfo.filename}, uploaded chunk ${uploadInfo.chunkNumber}`);
+                    uploadInfo.chunkNumber++;
+                    $('.progress-form').find('.progress').text(`transferred ${uploadInfo.chunkNumber}/${uploadInfo.totalChunks}`);
+                    this.uploadBlock(uploadInfo);
+                });
+            } else {
+                if (!uploadInfo.isPolestarUpload) {
+                    $('.progress-form').find('.progress').text("");
+                    $('.progress-form').find('.stage').text("Expanding webframe files ...");
+                }
+                let url = `cmd/finaliseupload/${uploadInfo.isPolestarUpload}/${uploadInfo.key}?url=${encodeURI(uploadInfo.satellite.url)}`;
+                ajax.Get({ url: url, cache: false }).then((r: dataResult) => {
+                    //debug.print(`File: ${uploadInfo.filename}, uploaded finished`);
+                    this.mb.close();
+                    //this.removeMessageHandlers();
+                    this.promiseResolver();
+                });
+            }
         }
         private handleMessages(m: messageBase) {
             switch (m.messageType.toLowerCase()) {
@@ -341,12 +383,12 @@ namespace fastnet {
                     $('.progress-form').find('.stage').text(zp.direction + ":");
                     $('.progress-form').find('.progress').text(progress);
                     break;
-                case "transferinfo":
-                    var ft = <server.transferInfo>m;
-                    var progress = `${ft.chunkNumber}/${ft.totalChunks}`;
-                    $('.progress-form').find('.stage').text("Transferring: ");
-                    $('.progress-form').find('.progress').text(progress);
-                    break;
+                //case "transferinfo":
+                //    var ft = <server.transferInfo>m;
+                //    var progress = `${ft.chunkNumber}/${ft.totalChunks}`;
+                //    $('.progress-form').find('.stage').text("Transferring: ");
+                //    $('.progress-form').find('.progress').text(progress);
+                //    break;
                 case "zipfinished":
                     var zf = <server.zipFinished>m;
                     $('.progress-form').find('.stage').text("Zip finished");
@@ -357,24 +399,24 @@ namespace fastnet {
                     $('.progress-form').find('.stage').text("unZip finished");
                     $('.progress-form').find('.progress').text("");
                     break;
-                case "uploadfinished":
-                    this.mb.close();
-                    this.removeMessageHandlers();
-                    this.promiseResolver();
-                    break;
+                //case "uploadfinished":
+                //    this.mb.close();
+                //    this.removeMessageHandlers();
+                //    this.promiseResolver();
+                //    break;
             }
         };
-        private removeMessageHandlers() {
-            this.messages.forEach((m) => {
-                this.messageHub.removeHandler(m.type, m.handlerNumber);
-            });
-            this.closeRemoteLog();
-        }
-        private addMessageHandlers() {
-            this.messages.forEach((m) => {
-                m.handlerNumber = this.messageHub.addHandler(m.type, (m) => { this.handleMessages(m); });
-            });
-        }
+        //private removeMessageHandlers() {
+        //    this.messages.forEach((m) => {
+        //        this.messageHub.removeHandler(m.type, m.handlerNumber);
+        //    });
+        //    //this.closeRemoteLog();
+        //}
+        //private addMessageHandlers() {
+        //    this.messages.forEach((m) => {
+        //        m.handlerNumber = this.messageHub.addHandler(m.type, (m) => { this.handleMessages(m); });
+        //    });
+        //}
         private getProgressFormTemplate(): string {
             var template =
                 `<div class='progress-form'>
@@ -382,8 +424,8 @@ namespace fastnet {
                         <span class='subject'></span>
                     </div>
                     <div>
-                        <span class='stage'></span>
-                        <span class='progress'></span>
+                        <div class='stage'></div>
+                        <div class='progress'></div>
                     </div>
                 </div>`;
             return template;
@@ -496,17 +538,17 @@ namespace fastnet {
             if (v !== null) {
                 this.major = ko.observable<number>(v.major);
                 this.minor = ko.observable<number>(v.minor);
-                this.revision = ko.observable<number>(v.revision);
                 this.build = ko.observable<number>(v.build);
+                this.revision = ko.observable<number>(v.revision);
             } else {
                 this.major = ko.observable<number>(0);
                 this.minor = ko.observable<number>(0);
-                this.revision = ko.observable<number>(0);
                 this.build = ko.observable<number>(0);
+                this.revision = ko.observable<number>(0);
             }
         }
         public toString(): string {
-            return `${this.major()}.${this.minor()}.${this.revision()}.${this.build()}`;
+            return `${this.major()}.${this.minor()}.${this.build()}.${this.revision()}`;
         }
         public compare(r: versionModel): number {
             //var r = new versionModel(another);
@@ -521,14 +563,14 @@ namespace fastnet {
                 } else if (l.minor() < r.minor()) {
                     return -1;
                 } else {
-                    if (l.revision() > r.revision()) {
+                    if (l.build() > r.build()) {
                         return 1;
-                    } else if (l.revision() < r.revision()) {
+                    } else if (l.build() < r.build()) {
                         return -1;
                     } else {
-                        if (l.build() > r.build()) {
+                        if (l.revision() > r.revision()) {
                             return 1;
-                        } else if (l.build() < r.build()) {
+                        } else if (l.revision() < r.revision()) {
                             return -1;
                         } else {
                             return 0;
@@ -554,7 +596,7 @@ namespace fastnet {
         public webframeIsUploaded: KnockoutObservable<boolean>;
         public webframeMarkerDll: string;
         public webframeRootDrive: string;
-        public publishedWebframeVersion: KnockoutObservable<versionModel>;
+        public publishedWebframeVersion: KnockoutObservable<versionModel>; // only meaningful on a source satellite
         public uploadedWebframeVersion: KnockoutObservable<versionModel>;
         public newVersionWaitingUpload: KnockoutObservable<boolean>;
         public sites: KnockoutObservableArray<siteModel>;
@@ -590,8 +632,12 @@ namespace fastnet {
                 this.uploadedWebframeVersion(new versionModel(s.uploadedWebframeVersion));
             }
             this.sites = ko.observableArray<siteModel>();
-            $.each(s.sites, (index, s) => {
+            //`${this.major()}.${this.minor()}.${this.revision()}.${this.build()}`;
+            $.each(s.sites, (index, s) => {                
                 var sm = new siteModel(s);
+                if (s.isWebframe) {
+                    debug.print(`${this.name} publishedWebframeVersion = ${this.publishedWebframeVersion()} uploadedWebframeVersion = ${this.uploadedWebframeVersion()} :::: ${s.name} ::: s values: isUpgradeable = ${s.isUpgradeable}, version =  ${s.version.major}.${s.version.minor}.${s.version.build}.${s.version.revision} :: sm values: isUpgradeable = ${sm.isUpgradeable}, version = ${sm.version()}`);
+                }
                 this.sites.push(sm);
             });
             if (this.isWebframeSource === false && this.uploadedWebframeVersion().compare(sourceSatellite.publishedWebframeVersion()) < 0) {

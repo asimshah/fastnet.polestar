@@ -14,11 +14,11 @@ namespace Fastnet.Polestar.Web
         public string SourceFolder { get; set; }
         public string DestinationFolder { get; set; }
         public string OutputFilename { get; set; }
-        private readonly IMessageHubManager messageHub;
+        //private readonly IMessageHubManager messageHub;
         private readonly ILogger<FolderCompression> logger;
         public FolderCompression()
         {
-            messageHub = ProviderHelper.ServiceProvider.GetService<IMessageHubManager>();
+            //messageHub = ProviderHelper.ServiceProvider.GetService<IMessageHubManager>();
             logger = ProviderHelper.ServiceProvider.GetService<ILogger<FolderCompression>>();
         }
         public void Compress()
@@ -43,8 +43,9 @@ namespace Fastnet.Polestar.Web
                         switch (e.EventType)
                         {
                             case ZipProgressEventType.Saving_BeforeWriteEntry:
-                                zipProgress zp = new zipProgress { direction = "Compressing", grossTotal = e.EntriesTotal, completed = e.EntriesSaved + 1 };
-                                messageHub.SendMessage(zp);
+                                logger.LogDebug($"zipping {e.EntriesSaved + 1 } of { e.EntriesTotal}");
+                                //zipProgress zp = new zipProgress { direction = "Compressing", grossTotal = e.EntriesTotal, completed = e.EntriesSaved + 1 };
+                                //messageHub.SendMessage(zp);
                                 break;
                         }
                     };
@@ -84,8 +85,9 @@ namespace Fastnet.Polestar.Web
                     {
                         if (e.EventType == ZipProgressEventType.Extracting_AfterExtractEntry)
                         {
-                            zipProgress zp = new zipProgress { direction = "Decompressing", grossTotal = e.EntriesTotal, completed = e.EntriesExtracted + 1 };
-                            messageHub.SendMessage(zp);
+                            logger.LogDebug($"zipping { e.EntriesExtracted + 1  } of { e.EntriesTotal}");
+                            //zipProgress zp = new zipProgress { direction = "Decompressing", grossTotal = e.EntriesTotal, completed = e.EntriesExtracted + 1 };
+                            //messageHub.SendMessage(zp);
                         }
                     };
                     zip.ExtractAll(DestinationFolder);

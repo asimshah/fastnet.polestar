@@ -27,14 +27,14 @@ var fastnet;
         function app() {
             this.signalRUnavailable = true;
             this.homeContainer = new fastnet.koContainer();
-            this.messageHub = null;
         }
+        //private messageHub: messageHub = null;
         app.prototype.init = function () {
             var _this = this;
             fastnet.koHelper.initialiseValidation();
             fastnet.koHelper.addStandardAdditionalValidationRules();
-            this.messageHub = new fastnet.messageHub();
-            this.messageHub.PrintLogs = true;
+            //this.messageHub = new messageHub();
+            //this.messageHub.PrintLogs = true;
             if (this.signalRUnavailable) {
                 fastnet.template.fetch("home").then(function (htmlFragment) {
                     $("#pageContainer").off().empty().append($(htmlFragment));
@@ -43,12 +43,10 @@ var fastnet;
                 });
             }
             else {
-                this.messageHub.start().then(function () {
-                    fastnet.template.fetch("home").then(function (htmlFragment) {
-                        $("#pageContainer").off().empty().append($(htmlFragment));
-                        fastnet.koHelper.bind(_this.homeContainer, ".home-page");
-                        _this.start();
-                    });
+                fastnet.template.fetch("home").then(function (htmlFragment) {
+                    $("#pageContainer").off().empty().append($(htmlFragment));
+                    fastnet.koHelper.bind(_this.homeContainer, ".home-page");
+                    _this.start();
                 });
             }
         };
@@ -86,20 +84,23 @@ var fastnet;
             var url = $(cmd.target).closest('.satellite').attr('data-satelliteurl');
             //debug.print(`received command ${cmd.commandName} for ${url}`);
             var selectedSatellite = this.homeContainer.model().findSatellite(url);
-            var polestar;
+            //var polestar;
             switch (cmd.command) {
                 case commands.uploadPolestarCommand:
-                    polestar = true;
+                    //polestar = true;
+                    var uploader = new webframeUploader(selectedSatellite);
+                    uploader.start(true).then(function () {
+                        _this.refreshSatellite(selectedSatellite);
+                    });
+                    break;
                 case commands.uploadWebframeCommand:
-                    var uploader = new webframeUploader(this.messageHub, selectedSatellite);
-                    uploader.start(polestar).then(function () {
-                        _this.getSatelliteInformation(selectedSatellite).then(function () {
-                            _this.attachSatelliteListCommands();
-                        });
+                    var uploader = new webframeUploader(selectedSatellite);
+                    uploader.start(false).then(function () {
+                        _this.refreshSatellite(selectedSatellite);
                     });
                     break;
                 case commands.createSiteCommand:
-                    var wh = new webframeHelper(this.messageHub, selectedSatellite);
+                    var wh = new webframeHelper(selectedSatellite);
                     wh.create().then(function (r) {
                         if (r) {
                             _this.refreshSatellite(selectedSatellite);
@@ -110,7 +111,7 @@ var fastnet;
                 case commands.deleteSiteCommand:
                     var siteName = $(cmd.target).closest('.site').attr('data-site');
                     var sm = selectedSatellite.findSite(siteName);
-                    var wh = new webframeHelper(this.messageHub, selectedSatellite);
+                    var wh = new webframeHelper(selectedSatellite);
                     if (cmd.command === commands.deleteSiteCommand) {
                         wh.delete(sm).then(function (r) {
                             if (r) {
@@ -129,7 +130,7 @@ var fastnet;
                 case commands.backupSiteCommand:
                     var siteName = $(cmd.target).closest('.site').attr('data-site');
                     var sm = selectedSatellite.findSite(siteName);
-                    var wh = new webframeHelper(this.messageHub, selectedSatellite);
+                    var wh = new webframeHelper(selectedSatellite);
                     wh.backup(sm).then(function () { });
                     break;
                 default:
@@ -181,28 +182,18 @@ var fastnet;
     fastnet.app = app;
     var webframeActions = (function () {
         function webframeActions() {
-            this.remoteMessageHub = null;
+            //protected remoteMessageHub: messageHub = null;
             this.logHandler = 0;
             this.satellite = null;
         }
-        webframeActions.prototype.closeRemoteLog = function () {
-            this.remoteMessageHub.PrintLogs = false;
-        };
-        webframeActions.prototype.logRemoteMessages = function () {
-            var _this = this;
-            this.remoteMessageHub = new fastnet.messageHub();
-            return this.remoteMessageHub.start(this.satellite.url).then(function () {
-                _this.remoteMessageHub.PrintLogs = true;
-            });
-        };
         return webframeActions;
     }());
     var webframeHelper = (function (_super) {
         __extends(webframeHelper, _super);
-        function webframeHelper(messageHub, satellite) {
+        //private homeMessageHub: messageHub = null;
+        function webframeHelper(/*messageHub: messageHub,*/ satellite) {
             _super.call(this);
-            this.homeMessageHub = null;
-            this.homeMessageHub = messageHub;
+            //this.homeMessageHub = messageHub;
             this.satellite = satellite;
         }
         webframeHelper.prototype.create = function () {
@@ -248,7 +239,7 @@ var fastnet;
                     if (r) {
                         fastnet.debug.print("delete confirmed");
                         _this.deleteStep2(site).then(function () {
-                            _this.closeRemoteLog();
+                            //this.closeRemoteLog();
                             resolve(true);
                         });
                     }
@@ -264,14 +255,14 @@ var fastnet;
             var bi = new fastnet.busyIndicator();
             bi.block("Upgrading site " + site.name + " on " + this.satellite.url);
             return new Promise(function (resolve) {
-                return _this.logRemoteMessages().then(function () {
-                    var url = _this.satellite.url + ("/cmd/upgrade/site/" + site.name);
-                    return fastnet.ajax.Get({ url: url, cache: false }, true).then(function (r) {
-                        _this.closeRemoteLog();
-                        resolve(true);
-                        bi.unBlock();
-                    });
+                var url = _this.satellite.url + ("/cmd/upgrade/site/" + site.name);
+                return fastnet.ajax.Get({ url: url, cache: false }, true).then(function (r) {
+                    //this.closeRemoteLog();
+                    resolve(true);
+                    bi.unBlock();
                 });
+                //return this.logRemoteMessages().then(() => {
+                //});
             });
         };
         webframeHelper.prototype.backup = function (site) {
@@ -279,30 +270,28 @@ var fastnet;
             var bi = new fastnet.busyIndicator();
             bi.block("Backup of site " + site.name + " on " + this.satellite.url);
             return new Promise(function (resolve) {
-                return _this.logRemoteMessages().then(function () {
-                    var url = _this.satellite.url + ("/cmd/backup/site/" + site.name);
-                    return fastnet.ajax.Get({ url: url, cache: false }, true).then(function (r) {
-                        _this.closeRemoteLog();
-                        resolve();
-                        bi.unBlock();
-                    });
+                var url = _this.satellite.url + ("/cmd/backup/site/" + site.name);
+                return fastnet.ajax.Get({ url: url, cache: false }, true).then(function (r) {
+                    //this.closeRemoteLog();
+                    resolve();
+                    bi.unBlock();
                 });
+                //return this.logRemoteMessages().then(() => {
+                //});
             });
         };
         webframeHelper.prototype.deleteStep2 = function (site) {
-            var _this = this;
             var bi = new fastnet.busyIndicator();
             bi.block("Deleting site " + site.name + " on " + this.satellite.url);
-            return this.logRemoteMessages().then(function (resolve) {
-                var url = _this.satellite.url + ("/cmd/delete/site/" + site.name);
-                return fastnet.ajax.Get({ url: url }, true).then(function (r) {
-                    _this.closeRemoteLog();
-                    bi.unBlock();
-                });
+            var url = this.satellite.url + ("/cmd/delete/site/" + site.name);
+            return fastnet.ajax.Get({ url: url }, true).then(function (r) {
+                //this.closeRemoteLog();
+                bi.unBlock();
             });
+            //return this.logRemoteMessages().then((resolve) => {
+            //});
         };
         webframeHelper.prototype.createStep2 = function (nsm) {
-            var _this = this;
             var newSite = {
                 name: nsm.name(),
                 url: nsm.url(),
@@ -312,20 +301,19 @@ var fastnet;
             };
             var bi = new fastnet.busyIndicator();
             bi.block("Creating site " + nsm.name + " on " + this.satellite.url);
-            return this.logRemoteMessages().then(function () {
-                var url = _this.satellite.url + "/cmd/create/site";
-                //debug.print(`new site requested on ${url}`);
-                return fastnet.ajax.Post({ url: url, data: newSite }, true).then(function () {
-                    _this.closeRemoteLog();
-                    bi.unBlock();
-                });
+            var url = this.satellite.url + "/cmd/create/site";
+            return fastnet.ajax.Post({ url: url, data: newSite }, true).then(function () {
+                //this.closeRemoteLog();
+                bi.unBlock();
             });
+            //return this.logRemoteMessages().then(() => {
+            //});
         };
         return webframeHelper;
     }(webframeActions));
     var webframeUploader = (function (_super) {
         __extends(webframeUploader, _super);
-        function webframeUploader(messageHub, uploadTo) {
+        function webframeUploader(/*messageHub: messageHub,*/ uploadTo) {
             _super.call(this);
             this.messages = [
                 { type: "zipprogress", handlerNumber: null },
@@ -335,33 +323,68 @@ var fastnet;
                 { type: "uploadFinished", handlerNumber: null }
             ];
             this.mb = null;
-            this.messageHub = null;
+            //private messageHub: messageHub = null;
             //private satellite: satelliteModel = null;
             this.promiseResolver = null;
-            this.messageHub = messageHub;
+            //this.messageHub = messageHub;
             this.satellite = uploadTo;
         }
         webframeUploader.prototype.start = function (uploadPolestar) {
             var _this = this;
-            var polestar = uploadPolestar == undefined || uploadPolestar == null ? false : true;
-            return this.logRemoteMessages().then(function () {
-                return new Promise(function (resolve, reject) {
-                    _this.promiseResolver = resolve;
-                    _this.addMessageHandlers();
-                    var messageBody = _this.getProgressFormTemplate();
-                    var temp = $(messageBody);
-                    temp.find('.subject').text("Upload to: " + _this.satellite.url);
-                    var caption = polestar ? "Polestar Upload" : "Webframe Upload";
-                    _this.mb = new fastnet.messageBox({
-                        caption: caption, template: temp.get(0).outerHTML,
-                        classNames: "upload", okButtonDisable: true, cancelButtonDisable: true
-                    });
-                    _this.mb.show().then(function (r) { });
-                    var cmd = polestar ? "polestardeployment" : "webframedeployment";
-                    var url = "cmd/" + cmd + "/start?url=" + encodeURI(_this.satellite.url);
-                    return fastnet.ajax.Get({ url: url, cache: false }).then(function () { });
+            var polestar = uploadPolestar; // == undefined || uploadPolestar == null ? false : true;
+            return new Promise(function (resolve, reject) {
+                _this.promiseResolver = resolve;
+                //this.addMessageHandlers();
+                var messageBody = _this.getProgressFormTemplate();
+                var temp = $(messageBody);
+                temp.find('.subject').text("Upload to: " + _this.satellite.url);
+                var caption = polestar ? "Polestar Upload" : "Webframe Upload";
+                _this.mb = new fastnet.messageBox({
+                    caption: caption, template: temp.get(0).outerHTML,
+                    classNames: "upload", okButtonDisable: true, cancelButtonDisable: true,
+                    afterDisplay: function () {
+                        if (!polestar) {
+                            $('.progress-form').find('.stage').text("Compressing webframe files ...");
+                        }
+                    }
+                });
+                _this.mb.show().then(function (r) { });
+                var cmd = polestar ? "polestardeployment" : "webframedeployment";
+                var url = "cmd/" + cmd + "/start?url=" + encodeURI(_this.satellite.url);
+                return fastnet.ajax.Get({ url: url, cache: false }).then(function (r) {
+                    var uploadInfo = r.data;
+                    $('.progress-form').find('.stage').text("Uploading in " + uploadInfo.totalChunks + " blocks");
+                    _this.uploadBlock(uploadInfo);
                 });
             });
+            //return this.logRemoteMessages().then(() => {
+            //});
+        };
+        webframeUploader.prototype.uploadBlock = function (uploadInfo) {
+            var _this = this;
+            if (uploadInfo.chunkNumber < uploadInfo.totalChunks) {
+                //debug.print(`File: ${uploadInfo.filename}, uploaded chunk ${uploadInfo.chunkNumber} ...`);
+                var url = "cmd/upload/" + uploadInfo.key + "/" + uploadInfo.chunkNumber + "/" + uploadInfo.chunkSize + "?url=" + encodeURI(uploadInfo.satellite.url) + "&file=" + encodeURI(uploadInfo.filename);
+                fastnet.ajax.Get({ url: url, cache: false }).then(function (r) {
+                    //debug.print(`    ...File: ${uploadInfo.filename}, uploaded chunk ${uploadInfo.chunkNumber}`);
+                    uploadInfo.chunkNumber++;
+                    $('.progress-form').find('.progress').text("transferred " + uploadInfo.chunkNumber + "/" + uploadInfo.totalChunks);
+                    _this.uploadBlock(uploadInfo);
+                });
+            }
+            else {
+                if (!uploadInfo.isPolestarUpload) {
+                    $('.progress-form').find('.progress').text("");
+                    $('.progress-form').find('.stage').text("Expanding webframe files ...");
+                }
+                var url = "cmd/finaliseupload/" + uploadInfo.isPolestarUpload + "/" + uploadInfo.key + "?url=" + encodeURI(uploadInfo.satellite.url);
+                fastnet.ajax.Get({ url: url, cache: false }).then(function (r) {
+                    //debug.print(`File: ${uploadInfo.filename}, uploaded finished`);
+                    _this.mb.close();
+                    //this.removeMessageHandlers();
+                    _this.promiseResolver();
+                });
+            }
         };
         webframeUploader.prototype.handleMessages = function (m) {
             switch (m.messageType.toLowerCase()) {
@@ -371,12 +394,12 @@ var fastnet;
                     $('.progress-form').find('.stage').text(zp.direction + ":");
                     $('.progress-form').find('.progress').text(progress);
                     break;
-                case "transferinfo":
-                    var ft = m;
-                    var progress = ft.chunkNumber + "/" + ft.totalChunks;
-                    $('.progress-form').find('.stage').text("Transferring: ");
-                    $('.progress-form').find('.progress').text(progress);
-                    break;
+                //case "transferinfo":
+                //    var ft = <server.transferInfo>m;
+                //    var progress = `${ft.chunkNumber}/${ft.totalChunks}`;
+                //    $('.progress-form').find('.stage').text("Transferring: ");
+                //    $('.progress-form').find('.progress').text(progress);
+                //    break;
                 case "zipfinished":
                     var zf = m;
                     $('.progress-form').find('.stage').text("Zip finished");
@@ -387,29 +410,22 @@ var fastnet;
                     $('.progress-form').find('.stage').text("unZip finished");
                     $('.progress-form').find('.progress').text("");
                     break;
-                case "uploadfinished":
-                    this.mb.close();
-                    this.removeMessageHandlers();
-                    this.promiseResolver();
-                    break;
             }
         };
         ;
-        webframeUploader.prototype.removeMessageHandlers = function () {
-            var _this = this;
-            this.messages.forEach(function (m) {
-                _this.messageHub.removeHandler(m.type, m.handlerNumber);
-            });
-            this.closeRemoteLog();
-        };
-        webframeUploader.prototype.addMessageHandlers = function () {
-            var _this = this;
-            this.messages.forEach(function (m) {
-                m.handlerNumber = _this.messageHub.addHandler(m.type, function (m) { _this.handleMessages(m); });
-            });
-        };
+        //private removeMessageHandlers() {
+        //    this.messages.forEach((m) => {
+        //        this.messageHub.removeHandler(m.type, m.handlerNumber);
+        //    });
+        //    //this.closeRemoteLog();
+        //}
+        //private addMessageHandlers() {
+        //    this.messages.forEach((m) => {
+        //        m.handlerNumber = this.messageHub.addHandler(m.type, (m) => { this.handleMessages(m); });
+        //    });
+        //}
         webframeUploader.prototype.getProgressFormTemplate = function () {
-            var template = "<div class='progress-form'>\n                    <div>\n                        <span class='subject'></span>\n                    </div>\n                    <div>\n                        <span class='stage'></span>\n                        <span class='progress'></span>\n                    </div>\n                </div>";
+            var template = "<div class='progress-form'>\n                    <div>\n                        <span class='subject'></span>\n                    </div>\n                    <div>\n                        <div class='stage'></div>\n                        <div class='progress'></div>\n                    </div>\n                </div>";
             return template;
         };
         return webframeUploader;
@@ -496,18 +512,18 @@ var fastnet;
             if (v !== null) {
                 this.major = ko.observable(v.major);
                 this.minor = ko.observable(v.minor);
-                this.revision = ko.observable(v.revision);
                 this.build = ko.observable(v.build);
+                this.revision = ko.observable(v.revision);
             }
             else {
                 this.major = ko.observable(0);
                 this.minor = ko.observable(0);
-                this.revision = ko.observable(0);
                 this.build = ko.observable(0);
+                this.revision = ko.observable(0);
             }
         }
         versionModel.prototype.toString = function () {
-            return this.major() + "." + this.minor() + "." + this.revision() + "." + this.build();
+            return this.major() + "." + this.minor() + "." + this.build() + "." + this.revision();
         };
         versionModel.prototype.compare = function (r) {
             //var r = new versionModel(another);
@@ -526,17 +542,17 @@ var fastnet;
                     return -1;
                 }
                 else {
-                    if (l.revision() > r.revision()) {
+                    if (l.build() > r.build()) {
                         return 1;
                     }
-                    else if (l.revision() < r.revision()) {
+                    else if (l.build() < r.build()) {
                         return -1;
                     }
                     else {
-                        if (l.build() > r.build()) {
+                        if (l.revision() > r.revision()) {
                             return 1;
                         }
-                        else if (l.build() < r.build()) {
+                        else if (l.revision() < r.revision()) {
                             return -1;
                         }
                         else {
@@ -585,8 +601,12 @@ var fastnet;
                 this.uploadedWebframeVersion(new versionModel(s.uploadedWebframeVersion));
             }
             this.sites = ko.observableArray();
+            //`${this.major()}.${this.minor()}.${this.revision()}.${this.build()}`;
             $.each(s.sites, function (index, s) {
                 var sm = new siteModel(s);
+                if (s.isWebframe) {
+                    fastnet.debug.print(_this.name + " publishedWebframeVersion = " + _this.publishedWebframeVersion() + " uploadedWebframeVersion = " + _this.uploadedWebframeVersion() + " :::: " + s.name + " ::: s values: isUpgradeable = " + s.isUpgradeable + ", version =  " + s.version.major + "." + s.version.minor + "." + s.version.build + "." + s.version.revision + " :: sm values: isUpgradeable = " + sm.isUpgradeable + ", version = " + sm.version());
+                }
                 _this.sites.push(sm);
             });
             if (this.isWebframeSource === false && this.uploadedWebframeVersion().compare(sourceSatellite.publishedWebframeVersion()) < 0) {
