@@ -339,6 +339,12 @@ var fastnet;
         function messageBox(options) {
             if (options === void 0) { options = { caption: "Message", template: "<span>no message body<span>" }; }
             _super.call(this, options);
+            if (options.caption === undefined || options.caption === null) {
+                options.caption = "Message";
+            }
+            if (options.template === undefined || options.template === null) {
+                options.template = "<span>no message body<span>";
+            }
             // this.caption = caption;
             // this.body = body;
             // this.mbOptions = $.extend({}, { modal: true }, options);
@@ -349,32 +355,8 @@ var fastnet;
             var _this = this;
             return new Promise(function (resolve, reject) {
                 _super.prototype.getTemplate.call(_this).then(function (template) {
-                    // at this point template contains a standard form
-                    // var title: JQuery = $(this.caption);
-                    // if (title.length === 0) { // i.e. if this caption does not contain html
-                    //     title = $(`<span>${this.caption}</span>`);
-                    // }
                     var temp = $(template).removeClass("form").addClass("message-box");
-                    //.append($("<div class='caption-bar'></div>"))
                     temp.find(".form-body").removeClass("form-body").addClass("message-body");
-                    //.append($("<div class='message-body'></div>"))
-                    //.append($("<div class='command-bar'><span data-command='okcommand' class='btn btn-confirm btn-small'>OK</span><span data-command='cancelcommand' class='btn btn-cancel btn-small'>Cancel</span></div>"));
-                    // temp.find(".caption-bar").append(title);
-                    // temp.find(".message-body").append($(this.body));
-                    // if (this.options.cancelButtonDisable !== undefined && this.options.cancelButtonDisable) {
-                    //     temp.find("span[data-command='cancelcommand']").hide();
-                    // } else if (this.options.cancelButtonCaption !== undefined && this.options.cancelButtonCaption !== null) {
-                    //     temp.find("span[data-command='cancelcommand']").text(this.options.cancelButtonCaption);
-                    // }
-                    // if (this.options.okButtonDisable !== undefined && this.options.okButtonDisable) {
-                    //     temp.find("span[data-command='okcommand']").hide();
-                    // } else if (this.options.okButtonCaption !== undefined && this.options.okButtonCaption !== null) {
-                    //     temp.find("span[data-command='okcommand']").text(this.options.okButtonCaption);
-                    // }
-                    // if (this.options.cancelButtonDisable !== undefined && this.options.cancelButtonDisable
-                    //     && this.options.okButtonDisable !== undefined && this.options.okButtonDisable) {
-                    //     temp.find(".command-bar").hide();
-                    // }
                     resolve(temp.get(0).outerHTML);
                 });
             });
