@@ -37,7 +37,7 @@ namespace Fastnet.Polestar.Web.Controllers
                         Array.Copy(data, buf, length);
                         data = buf;
                     }
-                    logger.LogInformation($"{backupFilename}, {data.Length} bytes read from position {offset}");
+                    //logger.LogInformation($"{backupFilename}, {data.Length} bytes read from position {offset}");
                     return SuccessResult(data);
                 }
             }

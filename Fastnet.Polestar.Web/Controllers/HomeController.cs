@@ -247,6 +247,7 @@ namespace Fastnet.Polestar.Web.Controllers
             logger.LogTrace("Poll received");
             CreateRequiredBackupTasks();
             CreateRequiredArchiveTasks();
+            CreatePurgeTask();
         }
         private void GetLatestAvailableWebframeVersion()
         {
