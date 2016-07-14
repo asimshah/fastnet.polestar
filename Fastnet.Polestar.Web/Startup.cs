@@ -65,6 +65,7 @@ namespace Fastnet.Polestar.Web
 #endif
             services.AddOptions();
             services.Configure<PolestarConfiguration>(Configuration.GetSection("PolestarConfiguration"));
+            services.AddSingleton<IConfigurationRoot>(Configuration);// so Tasks like Archive can access configuration information
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<ITemplateRepository, TemplateRepository>();
             //services.AddSingleton<IMessageHubManager, MessageHubManager>();

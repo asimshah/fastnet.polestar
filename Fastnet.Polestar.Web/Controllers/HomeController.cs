@@ -61,12 +61,12 @@ namespace Fastnet.Polestar.Web.Controllers
         {
             if(this.currentSatellite == null)
             {
-                logger.LogInformation("satellite/current returns 'not available'");
+                logger.LogDebug("satellite/current returns 'not available'");
                 return ErrorResult("Current Satellite not available");
             }
             else
             {
-                logger.LogInformation($"satellite/current returns {JsonConvert.SerializeObject(this.currentSatellite, Formatting.Indented)}");
+                logger.LogDebug($"satellite/current returns {JsonConvert.SerializeObject(this.currentSatellite, Formatting.Indented)}");
                 return SuccessResult(this.currentSatellite);
             }
             //return this.currentSatellite == null ? ErrorResult("Current Satellite not available") : SuccessResult(this.currentSatellite);
