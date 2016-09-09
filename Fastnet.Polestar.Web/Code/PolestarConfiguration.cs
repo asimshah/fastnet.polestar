@@ -15,6 +15,9 @@ namespace Fastnet.Polestar.Web
     }
     public class PolestarConfiguration
     {
+        public int ArchiveIntervalMinutes { get; set; }
+        public int BackupIntervalMinutes { get; set; }
+        public int PurgeIntervalMinutes { get; set; }
         public int FileTransferBufferLength { get; set; } // actual length = n * 1024
         public PolestarLocations defaultLocations { get; set;}
         public satellite[] Satellites { get; set; }

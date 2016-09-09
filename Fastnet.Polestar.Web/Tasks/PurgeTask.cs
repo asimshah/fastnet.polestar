@@ -33,12 +33,19 @@ namespace Fastnet.Polestar.Web
                 var zipList = Directory.EnumerateFiles(backupFolder, "*.zip");
                 var deleteList = zipList.Where(fn => File.GetCreationTime(fn) < retentionDate);
                 int count = 0;
-                foreach (var filename in deleteList)
+                if (deleteList.Count() > 0)
                 {
-                    ++count;
-                    File.Delete(filename);
-                    await Task.Delay(100);
-                    logger.LogInformation($"{filename} deleted");
+                    foreach (var filename in deleteList)
+                    {
+                        ++count;
+                        File.Delete(filename);
+                        await Task.Delay(100);
+                        logger.LogInformation($"{filename} deleted");
+                    } 
+                }
+                else
+                {
+                    logger.LogTrace($"No files to delete");
                 }
                 tr.Success = true;
                 tr.CompletionRemark = $"{count} zip files deleted";

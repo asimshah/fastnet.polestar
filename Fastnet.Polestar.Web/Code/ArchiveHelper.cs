@@ -84,11 +84,18 @@ namespace Fastnet.Polestar.Web
             }
             var listHere = Directory.EnumerateFiles(archiveFolder, "*.zip").Select(x => Path.GetFileName(x));
             var listToDownload = listAtRemoteSatellite.Except(listHere, StringComparer.InvariantCultureIgnoreCase);
-            foreach(var bf in listToDownload)
+            if (listToDownload.Count() > 0)
             {
-                logger.LogTrace($"Archive task for {bf} from {s.url}");
-                var task = new ArchiveTask(current, s, bf);
-                await taskManager.StartAsync(task);
+                foreach (var bf in listToDownload)
+                {
+                    logger.LogInformation($"Archive task for {bf} from {s.url}");
+                    var task = new ArchiveTask(current, s, bf);
+                    await taskManager.StartAsync(task);
+                } 
+            }
+            else
+            {
+                logger.LogTrace($"No archives required for {s.url}");
             }
         }
 

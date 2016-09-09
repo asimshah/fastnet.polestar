@@ -47,7 +47,7 @@ namespace Fastnet.Polestar.Web.Controllers
             this.Satellites = config.Satellites.ToArray();
             SetCurrentSatellite();
             this.polestarData = ctx;
-            logger.LogTrace($"ctor(): Satellite {this.currentSatellite?.name},  webframe folders are on {this.currentSatellite?.webframeRootDrive}");
+            //logger.LogTrace($"ctor(): Satellite {this.currentSatellite?.name},  webframe folders are on {this.currentSatellite?.webframeRootDrive}");
 
         }
         public IActionResult Index()
@@ -59,7 +59,7 @@ namespace Fastnet.Polestar.Web.Controllers
         [Route("satellite/current")]
         public IActionResult GetSatelliteInformation()
         {
-            if(this.currentSatellite == null)
+            if (this.currentSatellite == null)
             {
                 logger.LogDebug("satellite/current returns 'not available'");
                 return ErrorResult("Current Satellite not available");
@@ -181,7 +181,7 @@ namespace Fastnet.Polestar.Web.Controllers
         public async Task<IActionResult> StartWebframeUpload(string url)
         {
             if (this.currentSatellite?.latestAvailableWebframeVersion > new version())
-            {               
+            {
                 var zipFile = this.CompressWebframeFiles();
                 var target = this.Satellites.SingleOrDefault(x => string.Compare(x.url, url, true) == 0);
                 var r = await PrepareForUpload(target, zipFile);
@@ -215,7 +215,7 @@ namespace Fastnet.Polestar.Web.Controllers
                         Data = transfer
                     };
                     await p2p.AddFileChunk(data);
-                } 
+                }
             }
             else
             {
@@ -231,7 +231,7 @@ namespace Fastnet.Polestar.Web.Controllers
             {
                 var target = this.Satellites.SingleOrDefault(x => string.Compare(x.url, url, true) == 0);
                 var p2p = new Polestar2PolestarClient(target);
-                await p2p.FinaliseDeployment(key, isPolestar); 
+                await p2p.FinaliseDeployment(key, isPolestar);
             }
             else
             {
@@ -367,31 +367,43 @@ namespace Fastnet.Polestar.Web.Controllers
         {
             if (!this.currentSatellite.isWebframeSource)
             {
-                Task.Run(async () =>
+                var lastStartdate = GetLastStartDate<BackupTask>();
+                if (lastStartdate < DateTime.Now.AddMinutes(-config.BackupIntervalMinutes))
                 {
-                    BackupHelper bh = new BackupHelper(taskManager, currentSatellite);
-                    await bh.BackupSites();
-                });
+                    Task.Run(async () =>
+                    {
+                        BackupHelper bh = new BackupHelper(taskManager, currentSatellite);
+                        await bh.BackupSites();
+                    }); 
+                }
             }
         }
         private void CreateRequiredArchiveTasks()
         {
             if (this.currentSatellite.isWebframeArchive)
             {
-                Task.Run(async () =>
+                var lastStartdate = GetLastStartDate<ArchiveTask>();
+                if (lastStartdate < DateTime.Now.AddMinutes(- config.ArchiveIntervalMinutes))
                 {
-                    var bh = new ArchiveHelper(currentSatellite, this.Satellites);
-                    await bh.ArchiveBackups();
-                });
+                    Task.Run(async () =>
+                    {
+                        var bh = new ArchiveHelper(currentSatellite, this.Satellites);
+                        await bh.ArchiveBackups();
+                    });
+                }
             }
         }
         private void CreatePurgeTask()
         {
-            Task.Run(async () =>
+            var lastStartdate = GetLastStartDate<PurgeTask>();
+            if (lastStartdate < DateTime.Now.AddMinutes(-config.PurgeIntervalMinutes))
             {
-                var pt = new PurgeTask(this.currentSatellite);
-                await taskManager.StartAsync(pt);
-            });
+                Task.Run(async () =>
+                {
+                    var pt = new PurgeTask(this.currentSatellite);
+                    await taskManager.StartAsync(pt);
+                }); 
+            }
         }
         private string CompressWebframeFiles()
         {
@@ -460,6 +472,18 @@ namespace Fastnet.Polestar.Web.Controllers
             var r = await p2p.InitialiseUpload(filename);
             r.satellite = target;
             return r;
+        }
+        private DateTime GetLastStartDate<T>() where T : ITask
+        {
+            var history = taskManager.GetHistory<T>();
+            if(history.Count() > 0)
+            {
+                return history.Max(th => th.StartedAt);
+            }
+            else
+            {
+                return DateTime.MinValue;
+            }
         }
     }
 }

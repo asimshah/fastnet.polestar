@@ -35,12 +35,19 @@ namespace Fastnet.Polestar.Web
         public async Task BackupSites()
         {
             var sites = this.current.sites.Where(x => x.isWebframe && ReadyToBackup(x));
-            foreach(var site in sites)
+            if (sites.Count() > 0)
             {
-                string backupFilename = GetBackupFilename(site);
-                logger.LogInformation($"Site {site.name} selected for backup to {backupFilename}");
-                var task = new BackupTask(this.current, site, backupFilename);
-                await taskManager.StartAsync(task);
+                foreach (var site in sites)
+                {
+                    string backupFilename = GetBackupFilename(site);
+                    logger.LogInformation($"Site {site.name} selected for backup to {backupFilename}");
+                    var task = new BackupTask(this.current, site, backupFilename);
+                    await taskManager.StartAsync(task);
+                } 
+            }
+            else
+            {
+                logger.LogTrace($"No sites selcted for backup");
             }
         }
         public IEnumerable<string> GetBackupList()

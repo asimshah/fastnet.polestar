@@ -189,6 +189,7 @@ namespace fastnet {
             var nsm = new newSiteModel(this.satellite);
             return new Promise<boolean>((resolve, reject) => {
                 var caption: string = `New Webframe site on ${this.satellite.url}`;
+                // THIS WILL NOT WORK WITH LATEST FORM.TS
                 var csf = new form({
                     onCommand: (cmd) => {
                         switch (cmd.command) {

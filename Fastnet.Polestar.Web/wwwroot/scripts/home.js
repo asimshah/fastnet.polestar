@@ -201,6 +201,7 @@ var fastnet;
             var nsm = new newSiteModel(this.satellite);
             return new Promise(function (resolve, reject) {
                 var caption = "New Webframe site on " + _this.satellite.url;
+                // THIS WILL NOT WORK WITH LATEST FORM.TS
                 var csf = new fastnet.form({
                     onCommand: function (cmd) {
                         switch (cmd.command) {
