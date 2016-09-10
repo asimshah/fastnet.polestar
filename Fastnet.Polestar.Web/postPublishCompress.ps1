@@ -11,8 +11,8 @@ function compress {
 }
 try {
 	$here = pwd
-	$releaseFolder = [IO.Path]::Combine($here, "bin", "release")
-	$appOut = [IO.Path]::Combine($here, "bin", "release", "publishOutput")
+	$releaseFolder = [IO.Path]::Combine($here, "bin", "debug")
+	$appOut = [IO.Path]::Combine($here, "bin", "debug", "publishOutput")
 	compress $appOut $releaseFolder
 }
 catch{

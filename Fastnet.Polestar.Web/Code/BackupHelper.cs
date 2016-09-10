@@ -47,7 +47,7 @@ namespace Fastnet.Polestar.Web
             }
             else
             {
-                logger.LogTrace($"No sites selcted for backup");
+                logger.LogTrace($"No sites selected for backup");
             }
         }
         public IEnumerable<string> GetBackupList()
