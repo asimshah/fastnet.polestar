@@ -291,7 +291,7 @@ namespace fastnet {
                 legacyDatabase: nsm.legacyDatabase()
             };
             var bi = new busyIndicator();
-            bi.block(`Creating site ${nsm.name} on ${this.satellite.url}`);
+            bi.block(`Creating site ${nsm.name()} on ${this.satellite.url}`);
             var url = this.satellite.url + "/cmd/create/site";
             return ajax.Post({ url: url, data: newSite }, true).then(() => {
                 //this.closeRemoteLog();
