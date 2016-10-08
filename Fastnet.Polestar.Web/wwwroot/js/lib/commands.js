@@ -85,13 +85,21 @@ var fastnet;
                 });
             });
         };
-        command.enable = function (cmd) {
-            var selector = "[" + command.commandAttr + "='" + commands[cmd] + "']"; // " [data-command]";
-            $(selector).prop('disabled', false);
+        command.enable = function (cmd, selector) {
+            if (selector === void 0) { selector = null; }
+            var selctor = "[" + command.commandAttr + "='" + commands[cmd] + "']"; // " [data-command]";
+            if (selector !== null) {
+                selctor = selector + " " + selctor;
+            }
+            $(selctor).prop('disabled', false);
         };
-        command.disable = function (cmd) {
-            var selector = "[" + command.commandAttr + "='" + commands[cmd] + "']"; // " [data-command]";
-            $(selector).prop('disabled', true);
+        command.disable = function (cmd, selector) {
+            if (selector === void 0) { selector = null; }
+            var selctor = "[" + command.commandAttr + "='" + commands[cmd] + "']"; // " [data-command]";
+            if (selector !== null) {
+                selctor = selector + " " + selctor;
+            }
+            $(selctor).prop('disabled', true);
         };
         command.setCheckboxTool = function (tool, checked) {
             var elem = fastnet.toJQuery(tool);

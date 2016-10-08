@@ -342,7 +342,7 @@ var fastnet;
                 var caption = polestar ? "Polestar Upload" : "Webframe Upload";
                 _this.mb = new fastnet.messageBox({
                     caption: caption, template: temp.get(0).outerHTML,
-                    classNames: "upload", okButtonDisable: true, cancelButtonDisable: true,
+                    classNames: "upload",
                     afterDisplay: function () {
                         if (!polestar) {
                             $('.progress-form').find('.stage').text("Compressing webframe files ...");

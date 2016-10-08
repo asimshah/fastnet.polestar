@@ -33,6 +33,20 @@ var fastnet;
                 return moment(d);
             }
         };
+        date.toMomentUtc = function (d) {
+            if (typeof d === "string") {
+                if (d.length >= 19 && d.indexOf('T') === 10) {
+                    // is an isoDate?
+                    return moment.utc(d);
+                }
+                else {
+                    return moment.utc(d, date.stdDateFormat);
+                }
+            }
+            else {
+                return moment.utc(d);
+            }
+        };
         date.toDateString = function (d) {
             var md;
             if (typeof d === "string") {

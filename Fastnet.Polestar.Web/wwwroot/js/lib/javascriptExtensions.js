@@ -43,8 +43,16 @@ var fastnet;
             this.addStringEndsWith();
             this.addAsyncForEach();
             // Note: not sure if I will need Promise.thenReturn
-            // this.addThenReturn(); 
+            // this.addThenReturn();
+            // this.addStringIsNullOrWhitespace();
         };
+        // private static addStringIsNullOrWhitespace() {
+        //     if (!String.prototype.isNullOrWhitespace) {
+        //         String.prototype.isNullOrWhitespace = function () {
+        //             return !this || !this.trim();
+        //         }
+        //     }
+        // }
         javascriptExtensions.addAsyncForEach = function () {
             if (!Array.prototype.asyncForEach) {
                 Array.prototype.asyncForEach = function (f, user) {

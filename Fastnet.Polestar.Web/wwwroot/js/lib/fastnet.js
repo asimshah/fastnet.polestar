@@ -43,8 +43,16 @@ var fastnet;
             this.addStringEndsWith();
             this.addAsyncForEach();
             // Note: not sure if I will need Promise.thenReturn
-            // this.addThenReturn(); 
+            // this.addThenReturn();
+            // this.addStringIsNullOrWhitespace();
         };
+        // private static addStringIsNullOrWhitespace() {
+        //     if (!String.prototype.isNullOrWhitespace) {
+        //         String.prototype.isNullOrWhitespace = function () {
+        //             return !this || !this.trim();
+        //         }
+        //     }
+        // }
         javascriptExtensions.addAsyncForEach = function () {
             if (!Array.prototype.asyncForEach) {
                 Array.prototype.asyncForEach = function (f, user) {
@@ -2720,6 +2728,20 @@ var fastnet;
                 return moment(d);
             }
         };
+        date.toMomentUtc = function (d) {
+            if (typeof d === "string") {
+                if (d.length >= 19 && d.indexOf('T') === 10) {
+                    // is an isoDate?
+                    return moment.utc(d);
+                }
+                else {
+                    return moment.utc(d, date.stdDateFormat);
+                }
+            }
+            else {
+                return moment.utc(d);
+            }
+        };
         date.toDateString = function (d) {
             var md;
             if (typeof d === "string") {
@@ -2944,6 +2966,68 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var fastnet;
 (function (fastnet) {
+    (function () {
+        setupKnockout();
+    })();
+    function setupKnockout() {
+        /*
+         * read-only date display with momentjs
+         * use like this: data-bind="moment: dateVar, format: 'YYYY-MM-DD'"
+         * The "format" is optional and will default to "MM/DD/YYYY"
+         */
+        ko.bindingHandlers.moment = {
+            update: function (element, valueAccessor, allBindingsAccessor, viewModel) {
+                var date = null;
+                var format = fastnet.date.stdDateFormat;
+                var formatted = '**INVALID**'; // throw instead?
+                var val = ko.utils.unwrapObservable(valueAccessor());
+                var outputUtc = false;
+                if (typeof val === 'object' && val.value !== undefined) {
+                    if (val.isUtc !== undefined && val.isUtc === true) {
+                        date = fastnet.date.toMomentUtc(val.value);
+                    }
+                    else {
+                        date = fastnet.date.toMoment(val.value);
+                    }
+                    if (val.format !== undefined) {
+                        switch ((val.format).toLowerCase()) {
+                            case "stddate":
+                                format = fastnet.date.stdDateFormat;
+                                break;
+                            case "stddatetime":
+                                format = fastnet.date.stdDateTimeFormat;
+                                break;
+                            case "stddatetimesec":
+                                format = fastnet.date.stdDateTimeSecFormat;
+                                break;
+                            case "stddateutc":
+                                format = fastnet.date.stdDateFormat;
+                                outputUtc = true;
+                                break;
+                            case "stddatetimeutc":
+                                format = fastnet.date.stdDateTimeFormat;
+                                outputUtc = true;
+                                break;
+                            case "stddatetimesecutc":
+                                format = fastnet.date.stdDateTimeSecFormat;
+                                outputUtc = true;
+                                break;
+                            default:
+                                format = (val.format);
+                                break;
+                        }
+                    }
+                }
+                else {
+                    date = fastnet.date.toMoment(val);
+                }
+                if (date && date.isValid()) {
+                    formatted = outputUtc ? date.utc().format(format) + " UTC" : date.local().format(format);
+                }
+                element.innerText = formatted;
+            }
+        };
+    }
     // export interface validatableModel {
     //     hasError: KnockoutObservable<boolean>;
     //     validationMessage: KnockoutObservable<string>;
@@ -3439,13 +3523,21 @@ var fastnet;
                 });
             });
         };
-        command.enable = function (cmd) {
-            var selector = "[" + command.commandAttr + "='" + commands[cmd] + "']"; // " [data-command]";
-            $(selector).prop('disabled', false);
+        command.enable = function (cmd, selector) {
+            if (selector === void 0) { selector = null; }
+            var selctor = "[" + command.commandAttr + "='" + commands[cmd] + "']"; // " [data-command]";
+            if (selector !== null) {
+                selctor = selector + " " + selctor;
+            }
+            $(selctor).prop('disabled', false);
         };
-        command.disable = function (cmd) {
-            var selector = "[" + command.commandAttr + "='" + commands[cmd] + "']"; // " [data-command]";
-            $(selector).prop('disabled', true);
+        command.disable = function (cmd, selector) {
+            if (selector === void 0) { selector = null; }
+            var selctor = "[" + command.commandAttr + "='" + commands[cmd] + "']"; // " [data-command]";
+            if (selector !== null) {
+                selctor = selector + " " + selctor;
+            }
+            $(selctor).prop('disabled', true);
         };
         command.setCheckboxTool = function (tool, checked) {
             var elem = fastnet.toJQuery(tool);
@@ -3618,16 +3710,24 @@ var fastnet;
                 onCommand: null,
                 templateName: null,
                 template: null,
-                okButtonDisable: false,
+                okButtonRemove: false,
                 okButtonCaption: "OK",
-                cancelButtonDisable: false,
+                cancelButtonRemove: false,
                 cancelButtonCaption: "Cancel",
-                afterDisplay: null
+                sizeRatio: 0.6,
+                afterDisplay: null,
+                beforeClose: null
             };
             this.options = $.extend({}, defaultOptions, options);
-            var instance = baseForm.list.size();
+            if (baseForm.formStack.size() === 0) {
+                baseForm.attachResizeHandler();
+                var body = $("body");
+                baseForm.bodyHeight = body.height();
+                baseForm.bodyWidth = body.width();
+            }
+            var instance = baseForm.formStack.size();
             this.id = "fastnet-form-" + instance;
-            baseForm.list.setValue(this.id, this);
+            baseForm.formStack.push({ id: this.id, f: this });
         }
         Object.defineProperty(baseForm.prototype, "Id", {
             get: function () {
@@ -3636,6 +3736,12 @@ var fastnet;
             enumerable: true,
             configurable: true
         });
+        baseForm.prototype.bindCommands = function () {
+            var _this = this;
+            fastnet.command.attach("#" + this.id, function (cmd) {
+                _this.onCommand(cmd);
+            });
+        };
         baseForm.prototype.display = function (onCommand) {
             var _this = this;
             var finaliseDisplay = function () {
@@ -3652,15 +3758,31 @@ var fastnet;
                 if (_this.options.afterDisplay !== null) {
                     _this.options.afterDisplay();
                 }
-                //var cp = new command();
-                fastnet.command.attach("#" + _this.id, function (cmd) {
-                    _this.onCommand(cmd);
-                });
+                // $(window).on('resize.forms', () => {
+                //     let f = $(`#${this.id}`);
+                //     let body = $("body");
+                //     this.bodyHeight = body.height();
+                //     this.bodyWidth = body.width();
+                //     let h = f.height();
+                //     let w = f.width();
+                //     // let bh = $("body").height();
+                //     // let bw = $("body").width();
+                //     if (this.bodyHeight - h < 0 || this.bodyWidth - w < 0) {
+                //         this.resize();
+                //     } else {
+                //         this.centre(w, h);
+                //     }
+                // });
+                _this.resize();
+                _this.bindCommands();
+                // command.attach(`#${this.id}`, (cmd: receivedCommand) => {
+                //     this.onCommand(cmd);
+                // });
             };
             this.commandHandler = onCommand;
             if (this.options.modal) {
                 this.openModal().then(function () {
-                    fastnet.debug.print(_this.id);
+                    //debug.print(this.id);
                     finaliseDisplay();
                 });
             }
@@ -3675,65 +3797,77 @@ var fastnet;
          */
         baseForm.prototype.close = function () {
             fastnet.command.detach("#" + this.id);
-            baseForm.list.remove(this.id);
-            $("#" + this.id).remove();
-            if (baseForm.list.size() === 0) {
-                $("body > #forms-container").hide();
+            var f = baseForm.formStack.pop();
+            $("#" + f.id).closest(".form-root").remove();
+            if (baseForm.formStack.size() === 0) {
+                $("body > #forms-container").hide(); // okk
+                baseForm.detachResizeHandler();
+            }
+            else {
+                var cf = baseForm.formStack.peek();
+                cf.f.resize();
             }
         };
         baseForm.prototype.getTemplate = function () {
             var _this = this;
             return new Promise(function (resolve, reject) {
-                resolve("<div class='form-modal' id='" + _this.id + "'></div>");
+                resolve("<div class='form-root'><div class='form-modal' id='" + _this.id + "'></div></div>");
             });
         };
         baseForm.prototype.ensureContainer = function () {
             var container = $("body > #forms-container");
             if (container.length === 0) {
-                var template = "<div id='forms-container'></div>";
+                var template = "<div id='forms-container'></div>"; // okk `<div id='forms-container'><div class='form-list'></div?</div>`
                 $("body").append($(template));
                 container = $("body > #forms-container");
             }
             container.show();
         };
-        // protected modifyTemplate(template: string): string {
-        //     return template;
-        // }
+        baseForm.prototype.resize = function () {
+            var r = this.options.sizeRatio;
+            var h = baseForm.bodyHeight * r; // bh * r;
+            var w = baseForm.bodyWidth * r; //bw * r;
+            this.setSize(w, h);
+        };
+        baseForm.prototype.setSize = function (w, h) {
+            $("#" + this.id).height(h);
+            $("#" + this.id).width(w);
+            this.centre(w, h);
+        };
+        baseForm.prototype.centre = function (w, h) {
+            var formRoot = $("#" + this.id).parent();
+            var bh = baseForm.bodyHeight;
+            var bw = baseForm.bodyWidth;
+            var availHeight = bh - h;
+            var availWidth = bw - w;
+            formRoot.css("top", availHeight / 2);
+            formRoot.css("left", availWidth / 2);
+        };
         baseForm.prototype.openModal = function () {
             var _this = this;
             this.ensureContainer();
             return this.getTemplate().then(function (template) {
                 // var modaltemplate = this.modifyTemplate(template);
                 $("#forms-container").append($(template));
-                // if (this.options.classNames !== undefined && this.options.classNames.length > 0) {
-                //     $(`#${this.id}`).addClass(this.options.classNames);
-                // }
                 var element = $("#" + _this.id).get(0);
                 _this.interactable = interact(element);
-                _this.interactable.draggable({
-                    inertia: true,
-                    restrict: {
-                        restriction: 'parent',
-                        //endOnly: true,
-                        elementRect: { top: 0, left: 0, bottom: 1, right: 1 }
-                    },
-                    autoScroll: true,
-                    onmove: _this.dragMoveListener
-                }).resizable({
+                _this.interactable
+                    .resizable({
                     edges: { left: true, right: true, bottom: true, top: true }
-                }).on('resizemove', function (event) {
-                    var target = event.target, x = (parseFloat(target.getAttribute('data-x')) || 0), y = (parseFloat(target.getAttribute('data-y')) || 0);
-                    // update the element's style
-                    target.style.width = event.rect.width + 'px';
-                    target.style.height = event.rect.height + 'px';
-                    // translate when resizing from top or left edges
-                    x += event.deltaRect.left;
-                    y += event.deltaRect.top;
-                    target.style.webkitTransform = target.style.transform =
-                        'translate(' + x + 'px,' + y + 'px)';
-                    target.setAttribute('data-x', x);
-                    target.setAttribute('data-y', y);
-                    //target.textContent = event.rect.width + '×' + event.rect.height;
+                })
+                    .on('resizemove', function (event) {
+                    var target = event.target;
+                    var dx = event.dx;
+                    var dy = event.dy;
+                    if (event.edges.top) {
+                        dy = -dy;
+                    }
+                    if (event.edges.left) {
+                        dx = -dx;
+                    }
+                    var nw = parseFloat(target.style.width) + dx * 2;
+                    var nh = parseFloat(target.style.height) + dy * 2;
+                    _this.setSize(nw, nh);
                 });
             });
         };
@@ -3741,6 +3875,27 @@ var fastnet;
             if (this.commandHandler !== null) {
                 this.commandHandler(cmd);
             }
+        };
+        baseForm.attachResizeHandler = function () {
+            $(window).on('resize.forms', function () {
+                var body = $("body");
+                baseForm.bodyHeight = body.height();
+                baseForm.bodyWidth = body.width();
+                var cf = baseForm.formStack.peek();
+                var f = $("#" + cf.id);
+                var currentForm = cf.f;
+                var h = f.height();
+                var w = f.width();
+                if (baseForm.bodyHeight - h < 0 || baseForm.bodyWidth - w < 0) {
+                    currentForm.resize();
+                }
+                else {
+                    currentForm.centre(w, h);
+                }
+            });
+        };
+        baseForm.detachResizeHandler = function () {
+            $(window).off("resize.forms");
         };
         baseForm.prototype.dragMoveListener = function (event) {
             var target = event.target, 
@@ -3754,7 +3909,9 @@ var fastnet;
             target.setAttribute('data-x', x);
             target.setAttribute('data-y', y);
         };
-        baseForm.list = new collections.Dictionary();
+        baseForm.formStack = new collections.Stack();
+        baseForm.bodyHeight = 0;
+        baseForm.bodyWidth = 0;
         return baseForm;
     }());
     fastnet.baseForm = baseForm;
@@ -3772,37 +3929,39 @@ var fastnet;
         __extends(form, _super);
         function form(options) {
             _super.call(this, options);
-            //private model: validatableModel = null;
             this.modelGroup = null;
             this.result = null;
             this.promise = null;
         }
         form.prototype.getTemplate = function () {
             var _this = this;
-            var template = "<div class='form-modal' id='" + this.id + "'></div>";
-            if (this.options.templateName !== null) {
-                return fastnet.template.fetch(this.options.templateName).then(function (htmlFragment) {
-                    return _this.buildForm(template, htmlFragment);
-                });
-            }
-            else {
-                return new Promise(function (resolve, reject) {
-                    if (_this.options.template !== null) {
-                        // use the provided template and combine it
-                        resolve(_this.buildForm(template, _this.options.template));
-                    }
-                    else {
-                        resolve(template);
-                    }
-                });
-            }
-            ;
+            return _super.prototype.getTemplate.call(this).then(function (template) {
+                if (_this.options.templateName !== null) {
+                    return fastnet.template.fetch(_this.options.templateName).then(function (htmlFragment) {
+                        return _this.buildForm(template, htmlFragment);
+                    });
+                }
+                else {
+                    return new Promise(function (resolve, reject) {
+                        if (_this.options.template !== null) {
+                            // use the provided template and combine it
+                            resolve(_this.buildForm(template, _this.options.template));
+                        }
+                        else {
+                            resolve(template);
+                        }
+                    });
+                }
+                ;
+            });
         };
         /**
          * Show the form - promise returns when the form is closed
          * Both okcommand and cancelcommand automatically close the form
          * okcommand will be ignored if the form model is not valid
          * Promise parameter is true if okcommand, false if cancelcommand, or else null
+         * There is no way to stop the form closing at this point - use the option beforeClose to
+         * do some processing/prevent closure.
          */
         form.prototype.show = function () {
             var _this = this;
@@ -3813,7 +3972,7 @@ var fastnet;
                     switch (cmd.command) {
                         case commands.okcommand:
                             var canClose = true;
-                            if (_this.modelGroup.isValid() === false) {
+                            if (_this.modelGroup !== null && _this.modelGroup.isValid() === false) {
                                 _this.modelGroup.errors.showAllMessages();
                                 canClose = false;
                             }
@@ -3825,10 +3984,9 @@ var fastnet;
                         case commands.cancelcommand:
                             _this.result = false;
                             shouldClose = true;
-                            //this.close();
                             break;
                     }
-                    if (cmd.command !== commands.okcommand || shouldClose === true) {
+                    if (cmd.command !== commands.okcommand && cmd.command !== commands.cancelcommand) {
                         if (_this.options.onCommand === null) {
                             fastnet.debug.print("form " + _this.id + ": command " + cmd.commandName + ", no onCommand handler provided");
                         }
@@ -3844,7 +4002,20 @@ var fastnet;
             return this.promise;
         };
         form.prototype.close = function () {
-            fastnet.koHelper.unBind("#forms-container #" + this.Id);
+            var _this = this;
+            if (this.options.beforeClose !== null) {
+                this.options.beforeClose(this.result === null ? true : this.result).then(function (r) {
+                    if (r) {
+                        _this._close();
+                    }
+                });
+            }
+            else {
+                this._close();
+            }
+        };
+        form.prototype._close = function () {
+            fastnet.koHelper.unBind("#forms-container #" + this.Id); //okk
             _super.prototype.close.call(this);
             this.resolver(this.result);
         };
@@ -3855,11 +4026,16 @@ var fastnet;
          */
         form.prototype.bindModel = function (model, validateWholeModel) {
             if (validateWholeModel === void 0) { validateWholeModel = true; }
-            //this.model = model;
             if (validateWholeModel) {
                 this.modelGroup = ko.validatedObservable(model);
             }
-            fastnet.koHelper.bind(model, "#forms-container #" + this.Id);
+            fastnet.koHelper.bind(model, "#forms-container #" + this.Id); //okk
+        };
+        form.prototype.enableCommand = function (cmd) {
+            fastnet.command.enable(cmd, "#" + this.Id);
+        };
+        form.prototype.disableCommand = function (cmd) {
+            fastnet.command.disable(cmd, "#" + this.Id);
         };
         /**
          * return true if all the model properties are valid, or if validation has been turned off.
@@ -3888,28 +4064,26 @@ var fastnet;
             else {
                 title = $("<span></span>").text(this.options.caption);
             }
-            var temp = $(baseTemplate).addClass("form")
-                .append($("<div class='caption-bar'></div>"))
-                .append($("<div class='form-body'></div>"))
-                .append($("<div class='command-bar'><span data-command='okcommand' class='btn btn-confirm btn-small'>" + this.options.okButtonCaption + "</span><span data-command='cancelcommand' class='btn btn-cancel btn-small'>" + this.options.cancelButtonCaption + "</span></div>"));
-            temp.find(".caption-bar").append(title);
-            temp.find(".form-body").append($(templateBody));
-            if (this.options.cancelButtonDisable) {
-                temp.find("span[data-command='cancelcommand']").hide();
+            var formHtml = "<div class='form'>\n                    <div class='caption-bar'></div>\n                    <div class='form-body'></div>\n                    <div class='command-bar'>\n                        <span data-command='okcommand' class='btn btn-confirm btn-small'>" + this.options.okButtonCaption + "</span>\n                        <span data-command='cancelcommand' class='btn btn-cancel btn-small'>" + this.options.cancelButtonCaption + "</span>\n                    </div>\n                </div>";
+            var f = $(baseTemplate).find(".form-modal").append(formHtml).parent();
+            f.find(".caption-bar").append(title);
+            f.find(".form-body").append($(templateBody));
+            if (this.options.cancelButtonRemove) {
+                f.find("span[data-command='cancelcommand']").hide();
             }
             else if (this.options.cancelButtonCaption !== null) {
-                temp.find("span[data-command='cancelcommand']").text(this.options.cancelButtonCaption);
+                f.find("span[data-command='cancelcommand']").text(this.options.cancelButtonCaption);
             }
-            if (this.options.okButtonDisable) {
-                temp.find("span[data-command='okcommand']").hide();
+            if (this.options.okButtonRemove) {
+                f.find("span[data-command='okcommand']").hide();
             }
             else if (this.options.okButtonCaption !== null) {
-                temp.find("span[data-command='okcommand']").text(this.options.okButtonCaption);
+                f.find("span[data-command='okcommand']").text(this.options.okButtonCaption);
             }
-            if (this.options.cancelButtonDisable && this.options.okButtonDisable) {
-                temp.find(".command-bar").hide();
+            if (this.options.cancelButtonRemove && this.options.okButtonRemove) {
+                f.find(".command-bar").hide();
             }
-            return temp.get(0).outerHTML;
+            return f.get(0).outerHTML;
         };
         return form;
     }(baseForm));
@@ -3920,13 +4094,6 @@ var fastnet;
      */
     var messageBox = (function (_super) {
         __extends(messageBox, _super);
-        //private caption: string = null;
-        //private body: string = null;
-        //private result: boolean = null;
-        // private mbPromise: Promise<boolean> = null;
-        // private mbResolver: (value?: boolean | Thenable<boolean>) => void;
-        //private mbOptions: messageBoxOptions = null;
-        //private closeHandler: (r: boolean) => void = null;
         /**
          * Creates a modal messagebox
          * @param caption the text to use in the caption bar
@@ -3942,18 +4109,15 @@ var fastnet;
             if (options.template === undefined || options.template === null) {
                 options.template = "<span>no message body<span>";
             }
-            // this.caption = caption;
-            // this.body = body;
-            // this.mbOptions = $.extend({}, { modal: true }, options);
-            // this.mbOptions.modal = true;
-            // this.options = this.mbOptions;
+            this.options.sizeRatio = 0.25;
         }
         messageBox.prototype.getTemplate = function () {
             var _this = this;
             return new Promise(function (resolve, reject) {
                 _super.prototype.getTemplate.call(_this).then(function (template) {
-                    var temp = $(template).removeClass("form").addClass("message-box");
-                    temp.find(".form-body").removeClass("form-body").addClass("message-body");
+                    var temp = $(template);
+                    temp.find(".form-modal").addClass("message-box");
+                    temp.find(".form-body").addClass("message-body");
                     resolve(temp.get(0).outerHTML);
                 });
             });

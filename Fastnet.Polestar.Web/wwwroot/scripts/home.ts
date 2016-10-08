@@ -331,7 +331,7 @@ namespace fastnet {
                 var caption = polestar ? "Polestar Upload" : "Webframe Upload";
                 this.mb = new messageBox({
                     caption: caption, template: temp.get(0).outerHTML,
-                    classNames: "upload", okButtonDisable: true, cancelButtonDisable: true,
+                    classNames: "upload", //okButtonDisable: true, cancelButtonDisable: true,
                     afterDisplay: () => {
                         if (!polestar) {
                             $('.progress-form').find('.stage').text("Compressing webframe files ...");
