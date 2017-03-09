@@ -32,9 +32,11 @@ var fastnet;
             this.options = $.extend({}, defaultOptions, options);
             if (baseForm.formStack.size() === 0) {
                 baseForm.attachResizeHandler();
-                var body = $("body");
-                baseForm.bodyHeight = body.height();
-                baseForm.bodyWidth = body.width();
+                //let body = $("body");
+                //baseForm.bodyHeight = body.height();
+                //baseForm.bodyWidth = body.width();
+                baseForm.bodyHeight = window.innerHeight;
+                baseForm.bodyWidth = window.innerWidth;
             }
             var instance = baseForm.formStack.size();
             this.id = "fastnet-form-" + instance;
@@ -141,8 +143,8 @@ var fastnet;
             this.setSize(w, h);
         };
         baseForm.prototype.setSize = function (w, h) {
-            $("#" + this.id).height(h);
-            $("#" + this.id).width(w);
+            //$(`#${this.id}`).height(h);
+            //$(`#${this.id}`).width(w);
             this.centre(w, h);
         };
         baseForm.prototype.centre = function (w, h) {
@@ -189,9 +191,11 @@ var fastnet;
         };
         baseForm.attachResizeHandler = function () {
             $(window).on('resize.forms', function () {
-                var body = $("body");
-                baseForm.bodyHeight = body.height();
-                baseForm.bodyWidth = body.width();
+                //let body = $("body");
+                //baseForm.bodyHeight = body.height();
+                //baseForm.bodyWidth = body.width();
+                baseForm.bodyHeight = window.innerHeight;
+                baseForm.bodyWidth = window.innerWidth;
                 var cf = baseForm.formStack.peek();
                 var f = $("#" + cf.id);
                 var currentForm = cf.f;

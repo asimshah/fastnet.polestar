@@ -92,7 +92,7 @@ namespace fastnet {
                     break;
                 case commands.createSiteCommand:
                     var wh = new webframeHelper(selectedSatellite);
-                    wh.create().then((r) => {
+                    wh.create2().then((r) => {
                         if (r) {
                             this.refreshSatellite(selectedSatellite);
                         }
@@ -185,35 +185,53 @@ namespace fastnet {
             //this.homeMessageHub = messageHub;
             this.satellite = satellite;
         }
-        public create(): Promise<boolean> {
+        public create2(): Promise<boolean> {
             var nsm = new newSiteModel(this.satellite);
             return new Promise<boolean>((resolve, reject) => {
-                var caption: string = `New Webframe site on ${this.satellite.url}`;
-                // THIS WILL NOT WORK WITH LATEST FORM.TS
-                var csf = new form({
-                    onCommand: (cmd) => {
-                        switch (cmd.command) {
-                            case commands.cancelcommand:
-                                resolve(false);
-                                break;
-                            case commands.okcommand:
-                                this.createStep2(nsm).then(() => {
-                                    debug.print("new site created");
-                                    resolve(true);
-                                });
-                                break;
-                        }
-                    },
-                    caption: caption,
-                    templateName: "createWebframeSite",
-                    afterDisplay: () => {
-                        //command.disable(commands.okcommand);
-                        csf.bindModel(nsm);
+                let csform = new createSiteForm(this.satellite);
+                csform.show(nsm).then((arg) => {
+                    if (arg) {
+                        debug.print("ok command");
+                        this.createStep2(nsm).then(() => {
+                            debug.print("new site created");
+                            resolve(true);
+                        });
+                    } else {
+                        debug.print("cancel command");
+                        resolve(false);
                     }
                 });
-                csf.show();
             });
         }
+        //public create(): Promise<boolean> {
+        //    var nsm = new newSiteModel(this.satellite);
+        //    return new Promise<boolean>((resolve, reject) => {
+        //        var caption: string = `New Webframe site on ${this.satellite.url}`;
+        //        // THIS WILL NOT WORK WITH LATEST FORM.TS
+        //        var csf = new form({
+        //            onCommand: (cmd) => {
+        //                switch (cmd.command) {
+        //                    case commands.cancelcommand:
+        //                        resolve(false);
+        //                        break;
+        //                    case commands.okcommand:
+        //                        this.createStep2(nsm).then(() => {
+        //                            debug.print("new site created");
+        //                            resolve(true);
+        //                        });
+        //                        break;
+        //                }
+        //            },
+        //            caption: caption,
+        //            templateName: "createWebframeSite",
+        //            afterDisplay: () => {
+        //                //command.disable(commands.okcommand);
+        //                csf.bindModel(nsm);
+        //            }
+        //        });
+        //        csf.show();
+        //    });
+        //}
         public delete(site: siteModel): Promise<boolean> {
             return new Promise<boolean>((resolve, reject) => {
                 var mb = new messageBox({
@@ -432,7 +450,6 @@ namespace fastnet {
             return template;
         }
     }
-
     class newSiteModel {
         public name: KnockoutObservable<string>;
         public url: KnockoutObservable<string>;
@@ -634,7 +651,7 @@ namespace fastnet {
             }
             this.sites = ko.observableArray<siteModel>();
             //`${this.major()}.${this.minor()}.${this.revision()}.${this.build()}`;
-            $.each(s.sites, (index, s) => {                
+            $.each(s.sites, (index, s) => {
                 var sm = new siteModel(s);
                 if (s.isWebframe) {
                     debug.print(`${this.name} publishedWebframeVersion = ${this.publishedWebframeVersion()} uploadedWebframeVersion = ${this.uploadedWebframeVersion()} :::: ${s.name} ::: s values: isUpgradeable = ${s.isUpgradeable}, version =  ${s.version.major}.${s.version.minor}.${s.version.build}.${s.version.revision} :: sm values: isUpgradeable = ${sm.isUpgradeable}, version = ${sm.version()}`);
@@ -682,6 +699,39 @@ namespace fastnet {
                 }
             });
             return satellite;
+        }
+    }
+    class createSiteForm {
+        protected satellite: satelliteModel = null;
+        private form: form = null;
+        private resolver: (value?: boolean | Thenable<boolean>) => void;
+        constructor(sm: satelliteModel) {
+            this.satellite = sm;
+        }
+        public show(model: newSiteModel): Promise<boolean> {
+            let options: formOptions = {
+                sizeRatio: 0.85,
+                modal: true,
+                caption: `New Webframe site on ${this.satellite.url}`,
+                okButtonCaption: "Create site",
+                templateName: "createWebframeSite",
+                afterDisplay: () => {
+                    this.form.bindModel(model);
+                }
+            };
+            options.onCommand = (cmd) => this.handleCommands(cmd);
+            return new Promise<boolean>((resolve) => {
+                this.resolver = resolve;
+                this.form = new form(options);
+                this.form.show().then((r) => {
+                    this.resolver(r);
+                });
+            });
+        }
+        private handleCommands(cmd: receivedCommand): void {
+            switch (cmd.command) {
+                //case commands
+            }
         }
     }
 }

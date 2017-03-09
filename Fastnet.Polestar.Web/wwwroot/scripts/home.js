@@ -101,7 +101,7 @@ var fastnet;
                     break;
                 case commands.createSiteCommand:
                     var wh = new webframeHelper(selectedSatellite);
-                    wh.create().then(function (r) {
+                    wh.create2().then(function (r) {
                         if (r) {
                             _this.refreshSatellite(selectedSatellite);
                         }
@@ -196,36 +196,55 @@ var fastnet;
             //this.homeMessageHub = messageHub;
             this.satellite = satellite;
         }
-        webframeHelper.prototype.create = function () {
+        webframeHelper.prototype.create2 = function () {
             var _this = this;
             var nsm = new newSiteModel(this.satellite);
             return new Promise(function (resolve, reject) {
-                var caption = "New Webframe site on " + _this.satellite.url;
-                // THIS WILL NOT WORK WITH LATEST FORM.TS
-                var csf = new fastnet.form({
-                    onCommand: function (cmd) {
-                        switch (cmd.command) {
-                            case commands.cancelcommand:
-                                resolve(false);
-                                break;
-                            case commands.okcommand:
-                                _this.createStep2(nsm).then(function () {
-                                    fastnet.debug.print("new site created");
-                                    resolve(true);
-                                });
-                                break;
-                        }
-                    },
-                    caption: caption,
-                    templateName: "createWebframeSite",
-                    afterDisplay: function () {
-                        //command.disable(commands.okcommand);
-                        csf.bindModel(nsm);
+                var csform = new createSiteForm(_this.satellite);
+                csform.show(nsm).then(function (arg) {
+                    if (arg) {
+                        fastnet.debug.print("ok command");
+                        _this.createStep2(nsm).then(function () {
+                            fastnet.debug.print("new site created");
+                            resolve(true);
+                        });
+                    }
+                    else {
+                        fastnet.debug.print("cancel command");
+                        resolve(false);
                     }
                 });
-                csf.show();
             });
         };
+        //public create(): Promise<boolean> {
+        //    var nsm = new newSiteModel(this.satellite);
+        //    return new Promise<boolean>((resolve, reject) => {
+        //        var caption: string = `New Webframe site on ${this.satellite.url}`;
+        //        // THIS WILL NOT WORK WITH LATEST FORM.TS
+        //        var csf = new form({
+        //            onCommand: (cmd) => {
+        //                switch (cmd.command) {
+        //                    case commands.cancelcommand:
+        //                        resolve(false);
+        //                        break;
+        //                    case commands.okcommand:
+        //                        this.createStep2(nsm).then(() => {
+        //                            debug.print("new site created");
+        //                            resolve(true);
+        //                        });
+        //                        break;
+        //                }
+        //            },
+        //            caption: caption,
+        //            templateName: "createWebframeSite",
+        //            afterDisplay: () => {
+        //                //command.disable(commands.okcommand);
+        //                csf.bindModel(nsm);
+        //            }
+        //        });
+        //        csf.show();
+        //    });
+        //}
         webframeHelper.prototype.delete = function (site) {
             var _this = this;
             return new Promise(function (resolve, reject) {
@@ -653,6 +672,39 @@ var fastnet;
             return satellite;
         };
         return homePageModel;
+    }());
+    var createSiteForm = (function () {
+        function createSiteForm(sm) {
+            this.satellite = null;
+            this.form = null;
+            this.satellite = sm;
+        }
+        createSiteForm.prototype.show = function (model) {
+            var _this = this;
+            var options = {
+                sizeRatio: 0.85,
+                modal: true,
+                caption: "New Webframe site on " + this.satellite.url,
+                okButtonCaption: "Create site",
+                templateName: "createWebframeSite",
+                afterDisplay: function () {
+                    _this.form.bindModel(model);
+                }
+            };
+            options.onCommand = function (cmd) { return _this.handleCommands(cmd); };
+            return new Promise(function (resolve) {
+                _this.resolver = resolve;
+                _this.form = new fastnet.form(options);
+                _this.form.show().then(function (r) {
+                    _this.resolver(r);
+                });
+            });
+        };
+        createSiteForm.prototype.handleCommands = function (cmd) {
+            switch (cmd.command) {
+            }
+        };
+        return createSiteForm;
     }());
 })(fastnet || (fastnet = {}));
 //# sourceMappingURL=home.js.map
