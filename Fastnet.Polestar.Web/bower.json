@@ -2,8 +2,15 @@
   "name": "asp.net",
   "private": true,
   "dependencies": {
-    "normalize-css": "4.1.1",
-    "signalr": "2.2.0",
-    "fastnet": "asimshah/fastnet-typescript"
+    "normalize-css": "5.0.0",
+    "bootstrap": "3.3.6",
+    "jquery": "2.2.3",
+    "jquery-validation": "1.14.0",
+    "jquery-validation-unobtrusive": "3.2.6",
+    "es6-promise": "3.2.1",
+    "knockout": "^3.4.0",
+    "knockout-validation": "2.0.3",
+    "font-awesome": "^4.6.1",
+    "interact": "^1.2.6"
   }
 }

@@ -81,7 +81,7 @@ namespace Fastnet.Polestar.Web
             ProviderHelper.ServiceProvider = app.ApplicationServices; // this is supposed to be an "anti-pattern" - but how else can we get things like logger in classes that are not implemented as services
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug((text, level) => {
-                switch(level)
+                switch (level)
                 {
                     default:
                         return false;
@@ -125,12 +125,12 @@ namespace Fastnet.Polestar.Web
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
-           
+
             tm.Initialise();
-//#if SignalR
-//            app.UseWebSockets();
-//            app.UseSignalR(); 
-//#endif
+            //#if SignalR
+            //            app.UseWebSockets();
+            //            app.UseSignalR(); 
+            //#endif
         }
     }
 }

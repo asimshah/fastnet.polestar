@@ -1,0 +1,97 @@
+#forms-container {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(8, 16, 81, 0.75);
+    .form-root {
+        position: absolute;
+        &:not(:last-child) .form {
+            pointer-events: none;
+
+            .form-body {
+                opacity: 0.25;
+                background-color: black;
+            }
+        }
+    }
+    .form-modal {
+        display: flex;
+        // -ms-flex-direction: column;
+        // -webkit-flex-direction: column;
+        // flex-direction: column;
+        // min-height: 6.5rem;
+        // min-width: 8.6645rem;
+        -webkit-transform: translate(0, 0);
+        -moz-transform: translate(0, 0);
+        -ms-transform: translate(0, 0);
+        -o-transform: translate(0, 0);
+        transform: translate(0, 0);
+
+        > div:first-child {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }        
+
+        .caption-bar {
+            flex-grow: 0;
+            flex-shrink: 0;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .form-body {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .command-bar {
+            flex-grow: 0;
+            display: flex;
+            -ms-flex-direction: row;
+            -webkit-flex-direction: row;
+            flex-direction: row;
+
+            span {
+                display: inline-block;
+                text-align: center;
+            }
+        }
+    }
+}
+// these settings are here to lower their "specificity"
+// this allows these rules to be more easily overridden by apps
+.form-modal {
+    background-color: white;
+    color: #0033ff;
+    border-radius: 0.25em;
+    border: solid 0.1rem #000000;
+    padding: 0.1rem;
+}
+.form-body {
+    background-color: white;
+    // min-height: 10rem;
+    // min-width: 40rem;
+    padding: 0.5rem;
+}
+.caption-bar {
+    height: 2.4rem;
+    border-bottom: 0.1rem solid #808080;
+}
+.command-bar {
+    justify-content: center;
+    padding: 0.5rem 0.25rem 0.5rem 0.25rem;
+    border-top: 0.1rem solid #808080;
+    
+    span {
+        min-width: 10rem;
+        margin-left: 0.5rem;
+    }
+}

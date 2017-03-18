@@ -1,0 +1,16 @@
+.block-overlay {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(8, 16, 81, 0.75);
+    .indicator {
+        color: #fff312;
+        .animation {
+            text-align: center;
+        }
+    }
+}
