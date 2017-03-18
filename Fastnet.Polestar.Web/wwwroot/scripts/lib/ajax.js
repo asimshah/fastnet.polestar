@@ -124,9 +124,9 @@ var fastnet;
             // how to call a system form here? alert()??
             alert(errorMessage);
         };
-        ajax.rootUrl = "/";
         return ajax;
     }());
+    ajax.rootUrl = "/";
     fastnet.ajax = ajax;
 })(fastnet || (fastnet = {}));
 //# sourceMappingURL=ajax.js.map

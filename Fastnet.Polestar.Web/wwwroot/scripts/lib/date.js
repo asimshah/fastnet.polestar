@@ -92,11 +92,11 @@ var fastnet;
             }
             return md.format(date.stdDateTimeSecFormat);
         };
-        date.stdDateFormat = "DDMMMYYYY";
-        date.stdDateTimeFormat = "DDMMMYYYY HH:mm";
-        date.stdDateTimeSecFormat = "DDMMMYYYY HH:mm:ss";
         return date;
     }());
+    date.stdDateFormat = "DDMMMYYYY";
+    date.stdDateTimeFormat = "DDMMMYYYY HH:mm";
+    date.stdDateTimeSecFormat = "DDMMMYYYY HH:mm:ss";
     fastnet.date = date;
 })(fastnet || (fastnet = {}));
 //# sourceMappingURL=date.js.map

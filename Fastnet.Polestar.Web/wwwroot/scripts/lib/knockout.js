@@ -180,9 +180,9 @@ var fastnet;
             };
             ko.validation.registerExtenders();
         };
-        koHelper.boundElements = [];
         return koHelper;
     }());
+    koHelper.boundElements = [];
     fastnet.koHelper = koHelper;
     // export interface validationOptions {
     //     errorMessage?: string;
@@ -253,10 +253,11 @@ var fastnet;
         __extends(toggletag, _super);
         function toggletag(tag, downClass, upClass, defaultLabel) {
             if (defaultLabel === void 0) { defaultLabel = null; }
-            _super.call(this, tag);
-            this.downClass = downClass;
-            this.upClass = upClass;
-            this.defaultLabel = defaultLabel;
+            var _this = _super.call(this, tag) || this;
+            _this.downClass = downClass;
+            _this.upClass = upClass;
+            _this.defaultLabel = defaultLabel;
+            return _this;
         }
         toggletag.prototype.getTemplate = function () {
             return "<span data-bind='attr: { class : getClass()}'></span><!-- ko if hasLabel --><span class='label' data-bind='text: label'></span><!-- /ko -->";
@@ -299,21 +300,21 @@ var fastnet;
     var checkboxTag = (function (_super) {
         __extends(checkboxTag, _super);
         function checkboxTag() {
-            _super.call(this, "check-box", "fa-check-square-o", "fa-square-o", "no label");
+            return _super.call(this, "check-box", "fa-check-square-o", "fa-square-o", "no label") || this;
         }
         return checkboxTag;
     }(toggletag));
     var radioButtonTag = (function (_super) {
         __extends(radioButtonTag, _super);
         function radioButtonTag() {
-            _super.call(this, "radio-button", "fa-circle", "fa-circle-o", "no label");
+            return _super.call(this, "radio-button", "fa-circle", "fa-circle-o", "no label") || this;
         }
         return radioButtonTag;
     }(toggletag));
     var imageButtonTag = (function (_super) {
         __extends(imageButtonTag, _super);
         function imageButtonTag() {
-            _super.call(this, "image-button", "fa-question", "fa-question fa-rotate-180");
+            return _super.call(this, "image-button", "fa-question", "fa-question fa-rotate-180") || this;
         }
         return imageButtonTag;
     }(toggletag));
@@ -344,53 +345,53 @@ var fastnet;
         elementViewModel.prototype.dispose = function () {
             fastnet.debug.print("disposing " + this.getIdent());
         };
-        elementViewModel.count = 0;
-        elementViewModel.controlLoader = {
-            // note: this loader allows the template to be modified based on the current viewModel
-            // BUT I did not need this feature for the toggleViewModel based components.
-            // I have left this here in c ase I do need it eventually ...
-            // For the present this component loader is not itself loaded 
-            loadComponent: function (componentName, config, callback) {
-                function newCallback(definition) {
-                    if (config.createTemplateForViewModel && definition.createViewModel && (!definition.template || !definition.template.length)) {
-                        callback({
-                            template: [],
-                            createViewModel: function (params, componentInfo) {
-                                var componentVM = definition.createViewModel.call(this, params, componentInfo);
-                                var template = config.createTemplateForViewModel.call(this, componentVM, componentInfo);
-                                if (typeof template === 'string') {
-                                    template = ko.utils.parseHtmlFragment(template);
-                                }
-                                ko.virtualElements.setDomNodeChildren(componentInfo.element, template);
-                                return componentVM;
-                            }
-                        });
-                    }
-                    else {
-                        callback(definition);
-                    }
-                }
-                ko.components.defaultLoader.loadComponent(componentName, config, newCallback);
-            }
-        };
         return elementViewModel;
     }());
+    elementViewModel.count = 0;
+    elementViewModel.controlLoader = {
+        // note: this loader allows the template to be modified based on the current viewModel
+        // BUT I did not need this feature for the toggleViewModel based components.
+        // I have left this here in c ase I do need it eventually ...
+        // For the present this component loader is not itself loaded 
+        loadComponent: function (componentName, config, callback) {
+            function newCallback(definition) {
+                if (config.createTemplateForViewModel && definition.createViewModel && (!definition.template || !definition.template.length)) {
+                    callback({
+                        template: [],
+                        createViewModel: function (params, componentInfo) {
+                            var componentVM = definition.createViewModel.call(this, params, componentInfo);
+                            var template = config.createTemplateForViewModel.call(this, componentVM, componentInfo);
+                            if (typeof template === 'string') {
+                                template = ko.utils.parseHtmlFragment(template);
+                            }
+                            ko.virtualElements.setDomNodeChildren(componentInfo.element, template);
+                            return componentVM;
+                        }
+                    });
+                }
+                else {
+                    callback(definition);
+                }
+            }
+            ko.components.defaultLoader.loadComponent(componentName, config, newCallback);
+        }
+    };
     fastnet.elementViewModel = elementViewModel;
     var toggleViewModel = (function (_super) {
         __extends(toggleViewModel, _super);
         function toggleViewModel(element, labelText, checked, downClass, upClass) {
-            var _this = this;
-            _super.call(this, element);
-            this.downClass = downClass;
-            this.upClass = upClass;
-            this.groupName = null;
-            this.label = labelText !== null ? labelText.trim() : null;
-            this.hasLabel = this.label !== null && this.label.length > 0;
-            this.isChecked = ko.observable();
-            this.isChecked.subscribe(function (newValue) {
+            var _this = _super.call(this, element) || this;
+            _this.downClass = downClass;
+            _this.upClass = upClass;
+            _this.groupName = null;
+            _this.label = labelText !== null ? labelText.trim() : null;
+            _this.hasLabel = _this.label !== null && _this.label.length > 0;
+            _this.isChecked = ko.observable();
+            _this.isChecked.subscribe(function (newValue) {
                 _this.setElementChecked(newValue);
             });
-            this.isChecked(checked);
+            _this.isChecked(checked);
+            return _this;
         }
         toggleViewModel.prototype.setElementChecked = function (value) {
             if (value) {
@@ -447,10 +448,10 @@ var fastnet;
                 }
             }
         };
-        //collections.Dictionary<Person, collections.LinkedList<Car>>();
-        toggleViewModel.groups = new collections.Dictionary();
         return toggleViewModel;
     }(elementViewModel));
+    //collections.Dictionary<Person, collections.LinkedList<Car>>();
+    toggleViewModel.groups = new collections.Dictionary();
     fastnet.toggleViewModel = toggleViewModel;
 })(fastnet || (fastnet = {}));
 //# sourceMappingURL=knockout.js.map

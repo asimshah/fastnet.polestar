@@ -20,10 +20,10 @@ var fastnet;
      * Add more as required in the range 1 - 9999
      * All others are reserved
      */
+    var commands;
     (function (commands) {
         commands[commands["unknown"] = 0] = "unknown";
-    })(fastnet.commands || (fastnet.commands = {}));
-    var commands = fastnet.commands;
+    })(commands = fastnet.commands || (fastnet.commands = {}));
     /**
      * Object returned to a command listener contains details of the command that
      * received the click event;
@@ -111,11 +111,11 @@ var fastnet;
                 elem.removeClass("checked");
             }
         };
-        command.commandAttr = "data-command";
-        command.pageAttr = "data-page";
-        command.eventName = "click.commands";
         return command;
     }());
+    command.commandAttr = "data-command";
+    command.pageAttr = "data-page";
+    command.eventName = "click.commands";
     fastnet.command = command;
 })(fastnet || (fastnet = {}));
 //# sourceMappingURL=commands.js.map

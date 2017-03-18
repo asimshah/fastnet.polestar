@@ -22,9 +22,9 @@ var fastnet;
             overlayParent.parentElement.removeChild(overlayParent);
             busyIndicator.isBlocked = false;
         };
-        busyIndicator.isBlocked = false;
         return busyIndicator;
     }());
+    busyIndicator.isBlocked = false;
     fastnet.busyIndicator = busyIndicator;
 })(fastnet || (fastnet = {}));
 //# sourceMappingURL=busyIndicator.js.map

@@ -6,11 +6,11 @@ var __extends = (this && this.__extends) || function (d, b) {
 /// <reference path="../package.d.ts" />
 var fastnet;
 (function (fastnet) {
+    var commands;
     (function (commands) {
         commands[commands["cancelcommand"] = 10100] = "cancelcommand";
         commands[commands["okcommand"] = 10101] = "okcommand";
-    })(fastnet.commands || (fastnet.commands = {}));
-    var commands = fastnet.commands;
+    })(commands = fastnet.commands || (fastnet.commands = {}));
     var baseForm = (function () {
         function baseForm(options) {
             this.options = null;
@@ -225,11 +225,11 @@ var fastnet;
             target.setAttribute('data-x', x);
             target.setAttribute('data-y', y);
         };
-        baseForm.formStack = new collections.Stack();
-        baseForm.bodyHeight = 0;
-        baseForm.bodyWidth = 0;
         return baseForm;
     }());
+    baseForm.formStack = new collections.Stack();
+    baseForm.bodyHeight = 0;
+    baseForm.bodyWidth = 0;
     fastnet.baseForm = baseForm;
     // export class validatableModel {
     //     //public modelGroup: KnockoutValidationGroup = null;
@@ -244,10 +244,11 @@ var fastnet;
     var form = (function (_super) {
         __extends(form, _super);
         function form(options) {
-            _super.call(this, options);
-            this.modelGroup = null;
-            this.result = null;
-            this.promise = null;
+            var _this = _super.call(this, options) || this;
+            _this.modelGroup = null;
+            _this.result = null;
+            _this.promise = null;
+            return _this;
         }
         form.prototype.getTemplate = function () {
             var _this = this;
@@ -418,14 +419,15 @@ var fastnet;
          */
         function messageBox(options) {
             if (options === void 0) { options = { caption: "Message", template: "<span>no message body<span>" }; }
-            _super.call(this, options);
+            var _this = _super.call(this, options) || this;
             if (options.caption === undefined || options.caption === null) {
                 options.caption = "Message";
             }
             if (options.template === undefined || options.template === null) {
                 options.template = "<span>no message body<span>";
             }
-            this.options.sizeRatio = 0.25;
+            _this.options.sizeRatio = 0.25;
+            return _this;
         }
         messageBox.prototype.getTemplate = function () {
             var _this = this;

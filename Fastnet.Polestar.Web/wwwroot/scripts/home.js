@@ -13,6 +13,7 @@ var fastnet;
             start.init();
         });
     })();
+    var commands;
     (function (commands) {
         commands[commands["uploadWebframeCommand"] = 100] = "uploadWebframeCommand";
         commands[commands["uploadPolestarCommand"] = 101] = "uploadPolestarCommand";
@@ -20,8 +21,7 @@ var fastnet;
         commands[commands["deleteSiteCommand"] = 103] = "deleteSiteCommand";
         commands[commands["createSiteCommand"] = 104] = "createSiteCommand";
         commands[commands["backupSiteCommand"] = 105] = "backupSiteCommand";
-    })(fastnet.commands || (fastnet.commands = {}));
-    var commands = fastnet.commands;
+    })(commands = fastnet.commands || (fastnet.commands = {}));
     var app = (function () {
         function app() {
             this.signalRUnavailable = true;
@@ -184,6 +184,15 @@ var fastnet;
             //protected remoteMessageHub: messageHub = null;
             this.logHandler = 0;
             this.satellite = null;
+            //protected closeRemoteLog() {
+            //    this.remoteMessageHub.PrintLogs = false;
+            //}
+            //protected logRemoteMessages(): Promise<void> {
+            //    this.remoteMessageHub = new messageHub();
+            //    return this.remoteMessageHub.start(this.satellite.url).then(() => {
+            //        this.remoteMessageHub.PrintLogs = true;
+            //    });
+            //}
         }
         return webframeActions;
     }());
@@ -191,9 +200,10 @@ var fastnet;
         __extends(webframeHelper, _super);
         //private homeMessageHub: messageHub = null;
         function webframeHelper(/*messageHub: messageHub,*/ satellite) {
-            _super.call(this);
+            var _this = _super.call(this) || this;
             //this.homeMessageHub = messageHub;
-            this.satellite = satellite;
+            _this.satellite = satellite;
+            return _this;
         }
         webframeHelper.prototype.create2 = function () {
             var _this = this;
@@ -333,20 +343,21 @@ var fastnet;
     var webframeUploader = (function (_super) {
         __extends(webframeUploader, _super);
         function webframeUploader(/*messageHub: messageHub,*/ uploadTo) {
-            _super.call(this);
-            this.messages = [
+            var _this = _super.call(this) || this;
+            _this.messages = [
                 { type: "zipprogress", handlerNumber: null },
                 { type: "zipFinished", handlerNumber: null },
                 { type: "transferInfo", handlerNumber: null },
                 { type: "unzipFinished", handlerNumber: null },
                 { type: "uploadFinished", handlerNumber: null }
             ];
-            this.mb = null;
+            _this.mb = null;
             //private messageHub: messageHub = null;
             //private satellite: satelliteModel = null;
-            this.promiseResolver = null;
+            _this.promiseResolver = null;
             //this.messageHub = messageHub;
-            this.satellite = uploadTo;
+            _this.satellite = uploadTo;
+            return _this;
         }
         webframeUploader.prototype.start = function (uploadPolestar) {
             var _this = this;

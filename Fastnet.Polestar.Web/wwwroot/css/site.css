@@ -2798,19 +2798,6 @@ template {
   clip: auto;
 }
 
-.block-overlay {
-  position: absolute;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(8, 16, 81, 0.75); }
-  .block-overlay .indicator {
-    color: #fff312; }
-    .block-overlay .indicator .animation {
-      text-align: center; }
 
 #forms-container {
   position: absolute;

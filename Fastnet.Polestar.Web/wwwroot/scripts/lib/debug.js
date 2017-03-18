@@ -19,10 +19,10 @@ var fastnet;
                 console.log(message);
             }
         };
-        //
-        debug.routeMessagesToVisualStudio = true;
         return debug;
     }());
+    //
+    debug.routeMessagesToVisualStudio = true;
     fastnet.debug = debug;
 })(fastnet || (fastnet = {}));
 //# sourceMappingURL=debug.js.map
