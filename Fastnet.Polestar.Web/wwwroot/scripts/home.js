@@ -470,6 +470,7 @@ var fastnet;
                         existingNames.push(item.name);
                     }
                 });
+                //alert(`${existingNames[0]} is an existing name`);
                 this.urlRequired = satellite.type === 0 /* Live */ || satellite.type === 1 /* Test */;
                 this.name = ko.observable();
                 this.url = ko.observable();
@@ -482,7 +483,7 @@ var fastnet;
                     .extend({
                     exclusionList: {
                         params: existingNames,
-                        message: "A site with this name already exists"
+                        message: "A site with this name already exists!"
                     }
                 });
                 if (this.urlRequired) {

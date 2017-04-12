@@ -465,6 +465,7 @@ namespace fastnet {
                         existingNames.push(item.name);
                     }
                 });
+                //alert(`${existingNames[0]} is an existing name`);
                 this.urlRequired = satellite.type === server.SatelliteType.Live || satellite.type === server.SatelliteType.Test;
                 this.name = ko.observable<string>();
                 this.url = ko.observable<string>();
@@ -478,9 +479,10 @@ namespace fastnet {
                     .extend({
                         exclusionList: {
                             params: existingNames,// ["abc", "def"],
-                            message: "A site with this name already exists"
+                            message: "A site with this name already exists!"
                         }
-                    });
+                    })
+                    ;
                 if (this.urlRequired) {
                     this.url.extend({ required: { message: "Provide a url in the form something.domain.tld" } })
                         .extend({ pattern: { params: /^[a-z][a-z\.-]+\.[a-z]+[a-z]$/i, message: "This is not a valid url" } })

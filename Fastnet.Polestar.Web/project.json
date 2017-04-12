@@ -1,5 +1,5 @@
 {
-  "version": "1.2.1",
+  "version": "1.2.2",
   "dependencies": {
     "Fastnet.Core.Web": "2.1.8",
     "Microsoft.AspNetCore.Diagnostics": "1.0.0",

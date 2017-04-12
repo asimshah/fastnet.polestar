@@ -164,18 +164,48 @@ var fastnet;
                 errorElementClass: 'validation-error'
             });
         };
+        ///**
+        // * Adds standard fastnet validation rules
+        // * exclusionList - set "exclude" to an array of strings to exclude, e.g. exclude: ["abc", "def"]
+        // */
+        //public static addStandardAdditionalValidationRules() {
+        //    ko.validation.rules["exclusionList"] = {
+        //        validator: (newValue, options) => {
+        //            console.log(`${options.length}`);
+        //            console.log(`${options[0]}`);
+        //            var r = options.find((s) => {
+        //                return s === newValue;
+        //            });
+        //            return r === null;
+        //        },
+        //        message: "This item already exists"
+        //    };
+        //    ko.validation.registerExtenders();
+        //}
         /**
          * Adds standard fastnet validation rules
          * exclusionList - set "exclude" to an array of strings to exclude, e.g. exclude: ["abc", "def"]
          */
         koHelper.addStandardAdditionalValidationRules = function () {
             ko.validation.rules["exclusionList"] = {
-                validator: function (newValue, options) {
-                    var r = options.find(function (s) {
-                        return s === newValue;
+                validator: function (newValue, list) {
+                    var m = list.find(function (s) {
+                        var r = s === newValue;
+                        //console.log(`${s} against ${newValue}, match = ${r}`);
+                        return r;
                     });
-                    return r === null;
+                    var fr = typeof m === 'undefined'; // m == null;
+                    //console.log(`${m}, result ${fr}`);
+                    return fr;
                 },
+                //validator: (newValue, options) => {
+                //    console.log(`${options.length}`);
+                //    console.log(`${options[0]}`);
+                //    var r = options.find((s) => {
+                //        return s === newValue;
+                //    });
+                //    return r === null;
+                //},
                 message: "This item already exists"
             };
             ko.validation.registerExtenders();
