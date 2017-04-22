@@ -74,7 +74,7 @@ namespace Fastnet.Polestar.Web
                     //mailSettings.Smtp.From = "noreply@webframe.co.uk";
                     host = "smtp.gmail.com";
                     userName = "mbatbox@gmail.com";
-                    password = "webframe01";
+                    password = "mD5FJ3d49JaA";
                     defaultCredentials = false;
                     port = 587;
                     enableSsl = true;
