@@ -81,7 +81,7 @@ namespace Fastnet.Polestar.Web
                     break;
                 case SatelliteType.Live:// "live":
                     //noreply@booking.donwhillanshut.co.uk
-                    //mailSettings.Smtp.From = "noreply@webframe.co.uk";
+                    //mailSettings.Smtp.From = "noreply@booking.donwhillanshut.co.uk";
                     host = "127.0.0.1";
                     userName = null;
                     password = null;
